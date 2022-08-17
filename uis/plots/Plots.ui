@@ -14,10 +14,8 @@
    <string>Plots</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: white;
-border-radius: 20;
-color: black; 
-border: 2px solid #6ad487;</string>
+   <string notr="true">
+background-color: white;</string>
   </property>
   <widget class="QGraphicsView" name="graphicsView">
    <property name="geometry">
@@ -129,7 +127,7 @@ border: 2px solid #6ad487;</string>
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="showInvoicesButton">
+   <widget class="QPushButton" name="showPlotButton">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -169,7 +167,7 @@ border: 2px solid #6ad487;</string>
      <rect>
       <x>50</x>
       <y>50</y>
-      <width>71</width>
+      <width>101</width>
       <height>71</height>
      </rect>
     </property>

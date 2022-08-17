@@ -23,7 +23,15 @@
    <string notr="true">background-color: white;
 border-radius: 20;</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
+  <widget class="QWidget" name="centralwidget" native="true">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>951</width>
+     <height>531</height>
+    </rect>
+   </property>
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
@@ -64,9 +72,8 @@ color: white;
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-radius: 7; 
-background-color: white;
-border: 2px solid #ffff;</string>
+     <string notr="true">
+background-color: white;</string>
     </property>
    </widget>
    <widget class="QFrame" name="frame">
@@ -284,7 +291,16 @@ border: 2px solid #ffff;</string>
     </property>
    </widget>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>3</width>
+     <height>113</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

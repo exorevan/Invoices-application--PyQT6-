@@ -1,10 +1,13 @@
 import sqlite3
 import sys
+from datetime import date, timedelta, datetime
 
-# from PyQt5.QtWidgets import *
+import matplotlib.pyplot as plt
+import numpy as np
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import *
 from PyQt6.uic import loadUi
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
 class Invoices(QDialog):
@@ -20,10 +23,15 @@ class Invoices(QDialog):
 
         self.tableWidget.setColumnWidth(0, 0)
 
+        second_date = date.today()
+        first_date = date.today() - timedelta(days=30)
+        self.datePicker1.setDate(first_date)
+        self.datePicker2.setDate(second_date)
+        self.showInvocies()
+
     def makeNewInvoice(self):
+        invoice.setNewInvoice()
         widget.setCurrentIndex(1)
-        # invoice = Invoice()
-        # widget.setCurrentWidget(invoice)
 
     def showInvocies(self):
         date1 = self.datePicker1.date().toString('yyyy-MM-dd')
@@ -40,8 +48,8 @@ class Invoices(QDialog):
 
     def goToInvoice(self, index):
         row = self.tableWidget.item(self.tableWidget.currentRow(), 0).text()
-        invoice.changeInfo(row)
         widget.setCurrentIndex(1)
+        invoice.changeInfo(row)
 
     def showPlots(self):
         widget.setCurrentIndex(2)
@@ -58,16 +66,29 @@ class Invoice(QDialog):
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.addRowButton.clicked.connect(self.addRow)
         self.deleteRowButton.clicked.connect(self.deleteRow)
+        # self.calculateButton.clicked.connect(self.calculate)
 
         self.tableWidget.setColumnWidth(0, 0)
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)
 
+    def setNewInvoice(self):
+        self.textbox.setText('')
+        self.dateEdit.setDate(date.today())
+        self.tableWidget.setRowCount(0)
+
     def changeInfo(self, index):
-        select = "select id, width, height, count, price, total_price as 'Total price' from goods where invoice = " + index
+        select = "select id, invoice_name, date, goods, goods_unique, earning from invoices where id = " + index
         result = dbutil.select(select)
 
+        self.textbox.setText(str(result[0][1]))
+        self.dateEdit.setDate(datetime.strptime(result[0][2], '%Y-%m-%d'))
+
+        select = "select * from goods where invoice = " + index
+        result = dbutil.select(select)
+
+        self.tableWidget.setRowCount(len(result))
         for i in range(len(result)):
             for j in range(6):
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
@@ -77,9 +98,13 @@ class Invoice(QDialog):
         self.tableWidget.insertRow(currentRow + 1)
 
     def deleteRow(self):
-        if self.tableWidget.rowCount() >= 0:
+        if self.tableWidget.rowCount() > 0:
             currentRow = self.tableWidget.currentRow()
-            self.tableWidget.removeRow(currentRow + 1)
+
+            if currentRow < 0:
+                currentRow = 0
+
+            self.tableWidget.removeRow(currentRow)
 
 
 class Plots(QDialog):
@@ -87,6 +112,26 @@ class Plots(QDialog):
         super(Plots, self).__init__()
         loadUi("uis/plots/Plots.ui", self)
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
+        self.showPlotButton.clicked.connect(self.show_func)
+
+    def show_func(self):
+        scene = QtWidgets.QGraphicsScene()
+        self.View = QtWidgets.QGraphicsView(scene, self.graphicsView)
+
+        x = np.arange(0, 3 * np.pi, 0.1)
+        y = np.sin(x)
+
+        fig, ax = plt.subplots()
+        fig.gca()
+        ax.plot(x, y)
+        ax.grid()
+        canvas = FigureCanvas(fig)
+        proxy_widget = QtWidgets.QGraphicsProxyWidget()
+        proxy_widget.setWidget(canvas)
+        scene.addItem(proxy_widget)
+
+        self.View.resize(650, 500)
+        self.View.show()
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)
