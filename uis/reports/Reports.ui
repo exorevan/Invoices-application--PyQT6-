@@ -68,13 +68,17 @@ color: white;
     </property>
     <property name="font">
      <font>
-      <family>Segoe UI Semilight</family>
+      <family>Dubai Light</family>
+      <pointsize>14</pointsize>
      </font>
     </property>
     <property name="styleSheet">
      <string notr="true">
 background-color: white;</string>
     </property>
+    <attribute name="verticalHeaderDefaultSectionSize">
+     <number>50</number>
+    </attribute>
    </widget>
    <widget class="QFrame" name="frame">
     <property name="geometry">
@@ -180,8 +184,8 @@ border: 2px solid white;</string>
      </property>
      <property name="font">
       <font>
-       <family>Candara Light</family>
-       <pointsize>22</pointsize>
+       <family>Dubai Light</family>
+       <pointsize>20</pointsize>
       </font>
      </property>
      <property name="styleSheet">
@@ -255,8 +259,8 @@ border: 2px solid white;</string>
      </property>
      <property name="font">
       <font>
-       <family>Candara Light</family>
-       <pointsize>22</pointsize>
+       <family>Dubai Light</family>
+       <pointsize>20</pointsize>
       </font>
      </property>
      <property name="styleSheet">

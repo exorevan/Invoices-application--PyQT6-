@@ -20,11 +20,16 @@ background-color: white;</string>
   <widget class="QGraphicsView" name="graphicsView">
    <property name="geometry">
     <rect>
-     <x>240</x>
+     <x>230</x>
      <y>30</y>
      <width>691</width>
      <height>501</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>MV Boli</family>
+    </font>
    </property>
    <property name="styleSheet">
     <string notr="true">background-color: white;

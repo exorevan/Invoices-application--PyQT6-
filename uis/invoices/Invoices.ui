@@ -144,7 +144,8 @@ border: 2px solid #6ad487;</string>
    </property>
    <property name="font">
     <font>
-     <pointsize>7</pointsize>
+     <family>Dubai Light</family>
+     <pointsize>14</pointsize>
     </font>
    </property>
    <property name="styleSheet">
@@ -166,10 +167,10 @@ border: 2px solid white;</string>
     <bool>true</bool>
    </attribute>
    <attribute name="verticalHeaderVisible">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
    <attribute name="verticalHeaderHighlightSections">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
    <attribute name="verticalHeaderShowSortIndicator" stdset="0">
     <bool>false</bool>

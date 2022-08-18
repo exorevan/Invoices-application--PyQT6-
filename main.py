@@ -21,7 +21,8 @@ class Invoices(QDialog):
 
         self.tableWidget.doubleClicked.connect(self.goToInvoice)
 
-        self.tableWidget.setColumnWidth(0, 0)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.tableWidget.setColumnHidden(0,1)
 
         second_date = date.today()
         first_date = date.today() - timedelta(days=30)
@@ -59,6 +60,9 @@ class Invoices(QDialog):
 
 
 class Invoice(QDialog):
+    currentId = 0
+    newRows = 0
+
     def __init__(self):
         super(Invoice, self).__init__()
         loadUi("uis/invoice/Invoice.ui", self)
@@ -67,25 +71,37 @@ class Invoice(QDialog):
         self.addRowButton.clicked.connect(self.addRow)
         self.deleteRowButton.clicked.connect(self.deleteRow)
         self.calculateButton.clicked.connect(self.calculate)
+        self.saveButton.clicked.connect(self.save)
 
-        self.tableWidget.setColumnWidth(0, 0)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.tableWidget.setColumnHidden(0,1)
 
     def goBackToInvoices(self):
+        invoices.showInvocies()
         widget.setCurrentIndex(0)
 
     def setNewInvoice(self):
+        self.newRows = 0
+        select = "select max(id) from invoices"
+        result = dbutil.select(select)
+        newId = int(result[0][0]) + 1
+        self.currentId = newId
         self.textbox.setText('')
         self.dateEdit.setDate(date.today())
         self.tableWidget.setRowCount(0)
 
     def changeInfo(self, index):
+        self.newRows = 0
+        self.currentId = index
+        self.maxGoodsId = 0
+
         select = "select id, invoice_name, date, goods, goods_unique, earning from invoices where id = " + index
         result = dbutil.select(select)
 
         self.textbox.setText(str(result[0][1]))
         self.dateEdit.setDate(datetime.strptime(result[0][2], '%Y-%m-%d'))
         self.date.setText(str(datetime.strptime(result[0][2], '%Y-%m-%d').strftime('%d.%m.%Y')))
-        self.uniqueGoods.setText(str(result[0][4]))
+        self.uniqueGoods.setText(str(result[0][4]) + " positions")
         self.goods.setText(str(result[0][3]))
         self.sum.setText(str(result[0][5]))
 
@@ -98,8 +114,13 @@ class Invoice(QDialog):
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
 
     def addRow(self):
+        select = "select max(id) from goods"
+        result = dbutil.select(select)
+        newId = int(result[0][0]) + self.newRows + 1
         currentRow = self.tableWidget.currentRow()
         self.tableWidget.insertRow(currentRow + 1)
+        self.tableWidget.setItem(currentRow + 1, 0, QTableWidgetItem(str(newId)))
+        self.newRows += 1
 
     def deleteRow(self):
         if self.tableWidget.rowCount() > 0:
@@ -118,10 +139,12 @@ class Invoice(QDialog):
         for i in range(self.tableWidget.rowCount()):
             if not (self.tableWidget.item(i, 1) is None or self.tableWidget.item(i, 2) is None or self.tableWidget.item(
                     i, 3) is None or self.tableWidget.item(i, 4) is None):
+
                 if self.numberCheck(self.tableWidget.item(i, 1).text()) and self.numberCheck(
                         self.tableWidget.item(i, 2).text()) and \
                         self.tableWidget.item(i, 3).text().isdigit() and self.numberCheck(
-                    self.tableWidget.item(i, 4).text()):
+                        self.tableWidget.item(i, 4).text()):
+
                     count = int(self.tableWidget.item(i, 3).text())
                     price = float(self.tableWidget.item(i, 4).text())
 
@@ -131,7 +154,7 @@ class Invoice(QDialog):
                     goods += count
                     notNullRows += 1
 
-        self.uniqueGoods.setText(str(notNullRows))
+        self.uniqueGoods.setText(str(notNullRows) + " positions")
         self.goods.setText(str(goods))
         self.sum.setText(str(sum))
 
@@ -141,6 +164,15 @@ class Invoice(QDialog):
             return True
         except ValueError:
             return False
+
+    def save(self):
+        select = "update invoices set invoice_name = '" + self.textbox.toPlainText() + "', date = '" + \
+                 self.dateEdit.date().toString('yyyy-MM-dd') + "', goods = " + self.goods.text() + ", goods_unique = " + \
+                 self.uniqueGoods.text().replace(' positions', '') + ", earning = " + self.sum.text() + " where id = " + \
+                 self.currentId
+        result = dbutil.select(select)
+
+        #select
 
 
 class Plots(QDialog):
@@ -190,11 +222,13 @@ class DBUtil():
 
     def select(self, select):
         self.cursor.execute(select)
+        self.connection.commit()
 
         return self.cursor.fetchall()
 
 
 dbutil = DBUtil()
+
 app = QApplication(sys.argv)
 widget = QtWidgets.QStackedWidget()
 
