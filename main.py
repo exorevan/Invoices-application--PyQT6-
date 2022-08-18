@@ -66,7 +66,7 @@ class Invoice(QDialog):
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.addRowButton.clicked.connect(self.addRow)
         self.deleteRowButton.clicked.connect(self.deleteRow)
-        # self.calculateButton.clicked.connect(self.calculate)
+        self.calculateButton.clicked.connect(self.calculate)
 
         self.tableWidget.setColumnWidth(0, 0)
 
@@ -84,6 +84,10 @@ class Invoice(QDialog):
 
         self.textbox.setText(str(result[0][1]))
         self.dateEdit.setDate(datetime.strptime(result[0][2], '%Y-%m-%d'))
+        self.date.setText(str(datetime.strptime(result[0][2], '%Y-%m-%d').strftime('%d.%m.%Y')))
+        self.uniqueGoods.setText(str(result[0][4]))
+        self.goods.setText(str(result[0][3]))
+        self.sum.setText(str(result[0][5]))
 
         select = "select * from goods where invoice = " + index
         result = dbutil.select(select)
@@ -105,6 +109,38 @@ class Invoice(QDialog):
                 currentRow = 0
 
             self.tableWidget.removeRow(currentRow)
+
+    def calculate(self):
+        sum = 0
+        goods = 0
+        notNullRows = 0
+
+        for i in range(self.tableWidget.rowCount()):
+            if not (self.tableWidget.item(i, 1) is None or self.tableWidget.item(i, 2) is None or self.tableWidget.item(
+                    i, 3) is None or self.tableWidget.item(i, 4) is None):
+                if self.numberCheck(self.tableWidget.item(i, 1).text()) and self.numberCheck(
+                        self.tableWidget.item(i, 2).text()) and \
+                        self.tableWidget.item(i, 3).text().isdigit() and self.numberCheck(
+                    self.tableWidget.item(i, 4).text()):
+                    count = int(self.tableWidget.item(i, 3).text())
+                    price = float(self.tableWidget.item(i, 4).text())
+
+                    self.tableWidget.setItem(i, 5, QTableWidgetItem(str(count * price)))
+
+                    sum += count * price
+                    goods += count
+                    notNullRows += 1
+
+        self.uniqueGoods.setText(str(notNullRows))
+        self.goods.setText(str(goods))
+        self.sum.setText(str(sum))
+
+    def numberCheck(self, number):
+        try:
+            float(number)
+            return True
+        except ValueError:
+            return False
 
 
 class Plots(QDialog):
