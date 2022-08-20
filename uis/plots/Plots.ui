@@ -82,7 +82,7 @@ border: 2px solid #ffff;</string>
       <normaloff>i.webp</normaloff>i.webp</iconset>
     </property>
    </widget>
-   <widget class="QDateEdit" name="dateEdit">
+   <widget class="QDateEdit" name="datePicker1">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -107,7 +107,7 @@ border: 2px solid #6ad487;</string>
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QDateEdit" name="dateEdit_2">
+   <widget class="QDateEdit" name="datePicker2">
     <property name="geometry">
      <rect>
       <x>10</x>

@@ -63,6 +63,7 @@ class Invoice(QDialog):
     currentId = 0
     newRows = 0
     maxGoodsId = 0
+    deleted = False
 
     def __init__(self):
         super(Invoice, self).__init__()
@@ -73,9 +74,10 @@ class Invoice(QDialog):
         self.deleteRowButton.clicked.connect(self.deleteRow)
         self.calculateButton.clicked.connect(self.calculate)
         self.saveButton.clicked.connect(self.save)
+        self.deleteButton.clicked.connect(self.delete)
 
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
-        self.tableWidget.setColumnHidden(0,1)
+        self.tableWidget.setColumnHidden(0, 1)
 
     def goBackToInvoices(self):
         invoices.showInvocies()
@@ -83,6 +85,7 @@ class Invoice(QDialog):
 
     def setNewInvoice(self):
         self.newRows = 0
+        self.deleted = False
 
         select = "select max(id) from goods"
         result = dbutil.select(select)
@@ -96,13 +99,19 @@ class Invoice(QDialog):
         newId = int(result[0][0]) + 1
         self.currentId = newId
 
-        self.textbox.setText('')
+        self.textbox.setText(str(datetime.now()))
         self.dateEdit.setDate(date.today())
+        self.date.setText(str(datetime.strptime(str(date.today()), '%Y-%m-%d').strftime('%d.%m.%Y')))
         self.tableWidget.setRowCount(0)
+
+        self.uniqueGoods.setText('0')
+        self.goods.setText('0')
+        self.sum.setText('0')
 
     def changeInfo(self, index):
         self.newRows = 0
         self.currentId = index
+        self.deleted = False
 
         select = "select max(id) from goods"
         result = dbutil.select(select)
@@ -182,44 +191,66 @@ class Invoice(QDialog):
         return False
 
     def save(self):
-        self.calculate()
-
-        select = "update invoices set invoice_name = '" + self.textbox.toPlainText() + "', date = '" + \
-                 self.dateEdit.date().toString('yyyy-MM-dd') + "', goods = " + self.goods.text() + ", goods_unique = " + \
-                 self.uniqueGoods.text().replace(' positions', '') + ", earning = " + self.sum.text() + " where id = " + \
-                 self.currentId
-        result = dbutil.select(select)
-
-        ids = []
-
-        for i in range(self.tableWidget.rowCount()):
-            if self.upgradedCheck(self.tableWidget.item(i, 1), self.tableWidget.item(i, 2), self.tableWidget.item(i, 3),
-                                  self.tableWidget.item(i, 4)):
-                ids.append(int(self.tableWidget.item(i, 0).text()))
-
-                if int(self.tableWidget.item(i, 0).text()) > self.maxGoodsId:
-                    select = "insert into goods (invoice, width, height, count, price, total_price) values (" + \
-                             str(self.currentId) + ", " + self.tableWidget.item(i, 1).text() + ", " + \
-                             self.tableWidget.item(i, 2).text() + ", " + self.tableWidget.item(i, 3).text() + \
-                             ", " + self.tableWidget.item(i, 4).text() + ", " + self.tableWidget.item(i, 5).text() + ")"
-                    result = dbutil.select(select)
-                else:
-                    select = "update goods set width = " + self.tableWidget.item(i, 1).text() + ", height = " + \
-                             self.tableWidget.item(i, 2).text() + ", count = " + self.tableWidget.item(i, 3).text() + \
-                             ", price = " + self.tableWidget.item(i, 4).text() + ", total_price = " + \
-                             self.tableWidget.item(i, 5).text() + " where id = " + self.tableWidget.item(i, 0).text()
-                    result = dbutil.select(select)
-
-        select = "select id from goods where invoice = " + str(self.currentId)
-        result = dbutil.select(select)
-
-        array = [a[0] for a in result]
-        toDelete = set(array) - set(ids)
-
-        for id in toDelete:
-            select = "delete from goods where id = " + str(id)
+        if self.textbox.toPlainText() != "" and self.goods.text() != '' and self.uniqueGoods.text() != '' and self.sum.text() != '':
+            select = "select max(id) from invoices"
             result = dbutil.select(select)
 
+            if int(self.currentId) > int(result[0][0]) or self.deleted:
+                select = "insert into invoices (id, invoice_name, date, goods, goods_unique, earning) values (" + str(self.currentId) + ", '', '2000-01-01', 0, 0, 0)"
+                result = dbutil.select(select)
+
+            self.calculate()
+
+            select = "update invoices set invoice_name = '" + self.textbox.toPlainText() + "', date = '" + \
+                     self.dateEdit.date().toString('yyyy-MM-dd') + "', goods = " + self.goods.text() + ", goods_unique = " + \
+                     self.uniqueGoods.text().replace(' positions', '') + ", earning = " + self.sum.text() + " where id = " + \
+                     str(self.currentId)
+            result = dbutil.select(select)
+
+            ids = []
+
+            for i in range(self.tableWidget.rowCount()):
+                if self.upgradedCheck(self.tableWidget.item(i, 1), self.tableWidget.item(i, 2), self.tableWidget.item(i, 3),
+                                      self.tableWidget.item(i, 4)):
+                    ids.append(int(self.tableWidget.item(i, 0).text()))
+
+                    if int(self.tableWidget.item(i, 0).text()) > self.maxGoodsId:
+                        select = "insert into goods (invoice, width, height, count, price, total_price) values (" + \
+                                 str(self.currentId) + ", " + self.tableWidget.item(i, 1).text() + ", " + \
+                                 self.tableWidget.item(i, 2).text() + ", " + self.tableWidget.item(i, 3).text() + \
+                                 ", " + self.tableWidget.item(i, 4).text() + ", " + self.tableWidget.item(i, 5).text() + ")"
+                        result = dbutil.select(select)
+                    else:
+                        select = "update goods set width = " + self.tableWidget.item(i, 1).text() + ", height = " + \
+                                 self.tableWidget.item(i, 2).text() + ", count = " + self.tableWidget.item(i, 3).text() + \
+                                 ", price = " + self.tableWidget.item(i, 4).text() + ", total_price = " + \
+                                 self.tableWidget.item(i, 5).text() + " where id = " + self.tableWidget.item(i, 0).text()
+                        result = dbutil.select(select)
+
+            select = "select id from goods where invoice = " + str(self.currentId)
+            result = dbutil.select(select)
+
+            array = [a[0] for a in result]
+            toDelete = set(array) - set(ids)
+
+            for id in toDelete:
+                select = "delete from goods where id = " + str(id)
+                result = dbutil.select(select)
+
+        self.deleted = False
+
+    def delete(self):
+        self.deleted = True
+
+        select = "delete from goods where invoice = " + str(self.currentId)
+        result = dbutil.select(select)
+
+        select = "delete from invoices where id = " + str(self.currentId)
+        result = dbutil.select(select)
+
+        select = "select max(id) from goods"
+        result = dbutil.select(select)
+        self.maxGoodsId = result[0][0]
 
 
 class Plots(QDialog):
@@ -267,6 +298,7 @@ class DBUtil():
         self.connection = sqlite3.connect('db/Accounting.db')
         self.cursor = self.connection.cursor()
         self.select("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='goods';")
+        self.select("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='invoices';")
 
     def select(self, select):
         self.cursor.execute(select)
