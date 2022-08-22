@@ -3,11 +3,9 @@ import sys
 from datetime import date, timedelta, datetime
 
 import matplotlib.pyplot as plt
-import numpy as np
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import *
 from PyQt6.uic import loadUi
-from matplotlib import ticker
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
@@ -273,125 +271,136 @@ class Plots(QDialog):
         first_date = date.today() - timedelta(days=30)
         self.datePicker1.setDate(first_date)
         self.datePicker2.setDate(second_date)
-        self.show_func()
 
     def date(self, sdate, edate):
         dates = []
-        delta = edate - sdate # as timedelta
+        delta = edate - sdate
 
         for i in range(delta.days + 1):
             day = sdate + timedelta(days=i)
             dates.append(day.strftime('%Y-%m-%d'))
+
         return dates
 
     def show_func(self):
         scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(scene, self.graphicsView)
         dates = []
-        # x = np.arange(0, 3 * np.pi, 0.1)
-        # y = np.sin(x)
 
         date1 = self.datePicker1.date().toString('yyyy-MM-dd')
         date2 = self.datePicker2.date().toString('yyyy-MM-dd')
         date3 = self.datePicker1.date().toPyDate()
         date4 = self.datePicker2.date().toPyDate()
-        #print (date1)
+        # print (date1)
         dates = self.date(date3, date4)
 
-        y =[]
-        y1 = []
-        select = "select goods, earning, date from invoices where date between '" + date1 + "' and '" + date2 + "'"
-        result = dbutil.select(select)
-        goods = [a[0] for a in result]
-        earnings = [a[1] for a in result]
-        date = [a[2] for a in result]
-
-        for i in dates:
-            if i in date:
-                y.append(goods[date.index(i)])
-                y1.append(earnings[date.index(i)])
-            else:
-                y.append(0)
-                y1.append(0)
-
-        # y = goods
-        # y1 = earnings
-
         x = dates
-        fig, ax = plt.subplots()
-        # ax.set_xticks(dates)
-        fig.gca()
-        ax.plot(x, y)
-        ax.plot(x, y1)
-        plt.fill(dates, y)
 
+        y = []
+        y1 = []
+
+        if len(x) > 31:
+            a = int(len(x) / 30.25)
+            x = x[::a]
+
+        for i in range(len(x) - 1):
+            date1 = x[i]
+            date2 = x[i + 1]
+            select = "select sum(goods), sum(earning) from invoices where date >= '" + date1 + "' and date < '" + date2 + "'"
+            result = dbutil.select(select)
+            y.append(result[0][0])
+            y1.append(result[0][1])
+            if not y[i]:
+                y[i] = 0
+            if not y1[i]:
+                y1[i] = 0
+
+        x = x[:-1]
+
+        # plt.plot(np.arange(0,5, 0.2))
+
+        fig, ax = plt.subplots()
+
+        # ax.set_xticks(dates)
+        # fig.gca()
+        # plt.plot_date(x, y)
+
+        # plt.subplot(1,3,1)
+        ax.plot(x, y, 'o--')
+        # plt.plot_date(x,y1)
+        # plt.subplot(1,3,2)
+        ax.plot(x, y1, 'r--o')
+
+        # ax.grid()
+        # plt.fill(dates, y)
+        # ax.grid()
         # Устанавливаем интервал основных и
         # вспомогательных делений:
-        ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
-        ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
-        ax.yaxis.set_major_locator(ticker.MultipleLocator(50))
-        ax.yaxis.set_minor_locator(ticker.MultipleLocator(10))
+        # ax.xaxis.set_major_locator(ticker.MultipleLocator(2))
+        # ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
+        # ax.yaxis.set_major_locator(ticker.MultipleLocator(50))
+        # ax.yaxis.set_minor_locator(ticker.MultipleLocator(10))
 
         # Настраиваем вид основных тиков:
         ax.tick_params(axis='both', # Применяем параметры к обеим осям
                        which='major', # Применяем параметры к основным делениям
                        direction='inout', # Рисуем деления внутри и снаружи графика
-                       length=20, # Длинна делений
-                       width=4, # Ширина делений
-                       color='m', # Цвет делений
-                       pad=10, # Расстояние между черточкой и ее подписью
-                       labelsize=15, # Размер подписи
-                       labelcolor='r', # Цвет подписи
-                       bottom=True, # Рисуем метки снизу
-                       top=True, # сверху
-                       left=True, # слева
-                       right=True, # и справа
-                       labelbottom=True, # Рисуем подписи снизу
-                       labeltop=True, # сверху
-                       labelleft=True, # слева
-                       labelright=True, # и справа
-                       labelrotation=45) # Поворот подписей
-
-        # Настраиваем вид вспомогательных тиков:
-        ax.tick_params(axis='both', # Применяем параметры к обеим осям
-                       which='minor', # Применяем параметры к вспомогательным делениям
-                       direction='out', # Рисуем деления внутри и снаружи графика
                        length=10, # Длинна делений
                        width=2, # Ширина делений
                        color='m', # Цвет делений
                        pad=10, # Расстояние между черточкой и ее подписью
-                       labelsize=15, # Размер подписи
+                       labelsize=10, # Размер подписи
                        labelcolor='r', # Цвет подписи
-                       bottom=True, # Рисуем метки снизу
-                       top=True, # сверху
-                       left=True, # слева
-                       right=True) # и справа
+                       # bottom=True, # Рисуем метки снизу
+                       # top=True, # сверху
+                       # left=True, # слева
+                       # right=True, # и справа
+                       # labelbottom=True, # Рисуем подписи снизу
+                       # labeltop=True, # сверху
+                       # labelleft=True, # слева
+                       # labelright=True, # и справа
+                       labelrotation=90) # Поворот подписей
 
+                        # Настраиваем вид вспомогательных тиков:
+                        # ax.tick_params(axis='both', # Применяем параметры к обеим осям
+                        # which='minor', # Применяем параметры к вспомогательным делениям
+                        # direction='out', # Рисуем деления внутри и снаружи графика
+                        # length=10, # Длинна делений
+                        # width=2, # Ширина делений
+                        # color='m', # Цвет делений
+                        # pad=10, # Расстояние между черточкой и ее подписью
+                        # labelsize=15, # Размер подписи
+                        # labelcolor='r', # Цвет подписи
+                        # bottom=True, # Рисуем метки снизу
+                        # top=True, # сверху
+                        # left=True, # слева
+                        # right=True) # и справа
+                        #
+                        #
 
+                        # Добавляем линии основной сетки:
+                        # ax.grid(which='major',
+                        # color='m')
 
+                        # Включаем видимость вспомогательных делений:
+                        # ax.minorticks_on()
 
-        # Добавляем линии основной сетки:
-        ax.grid(which='major',
-                color='m')
+                        # Теперь можем отдельно задавать внешний вид
+                        # вспомогательной сетки:
+                        # ax.grid(which='minor',
+                        # color='m',
+                        # linestyle=':')
 
-        # Включаем видимость вспомогательных делений:
-        ax.minorticks_on()
+                        # fig.set_figwidth(12)
+                        # fig.set_figheight(8)
+                        # ax.grid()
 
-        # Теперь можем отдельно задавать внешний вид
-        # вспомогательной сетки:
-        ax.grid(which='minor',
-                color='m',
-                linestyle=':')
-
-        fig.set_figwidth(6)
-        fig.set_figheight(5)
-        # ax.grid()
         canvas = FigureCanvas(fig)
         proxy_widget = QtWidgets.QGraphicsProxyWidget()
         proxy_widget.setWidget(canvas)
         scene.addItem(proxy_widget)
-        plt.xlim([0, 25])
-        self.View.resize(650, 500)
+        # plt.xlim([0, 25])
+        # self.View.resize(650, 500)
         self.View.show()
 
     def goBackToInvoices(self):
@@ -422,7 +431,7 @@ class Reports(QDialog):
         result = dbutil.select(select)
 
         self.goodsLabel.setText(str(result[0][0]))
-        self.countLabel.setText(str(result[0][1]))
+        self.sumLabel.setText(str(result[0][1]))
 
         select = "select width, height, sum(count), sum(total_price) from goods inner join invoices on goods.invoice = invoices.id where date between '" + date1 + "' and '" + date2 + "'group by width, height"
         result = dbutil.select(select)
@@ -466,8 +475,9 @@ widget.addWidget(invoice)
 widget.addWidget(plots)
 widget.addWidget(reports)
 
-widget.setFixedWidth(960)
-widget.setFixedHeight(560)
+# widget.setFixedWidth(960)
+# widget.setFixedHeight(560)
+widget.resize(960, 560)
 widget.show()
 
 sys.exit(app.exec())

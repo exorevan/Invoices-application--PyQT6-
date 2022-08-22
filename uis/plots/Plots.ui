@@ -69,10 +69,19 @@ border: 2px solid #6ad487;</string>
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QPushButton{
+background-color: white;
 border-radius: 20;
 color: black; 
-border: 2px solid #ffff;</string>
+
+}
+
+
+
+QPushButton:hover {
+	border: 2px solid white;
+}
+</string>
     </property>
     <property name="text">
      <string/>
@@ -98,13 +107,30 @@ border: 2px solid #ffff;</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QDateEdit {
+background-color: white;
 border-radius: 10;
 color: black; 
-border: 2px solid #6ad487;</string>
+border: 2px solid #6ad487;
+}
+
+
+QDateEdit:hover {
+
+	
+
+	border-color: rgb(255, 255, 255);
+
+
+
+}
+</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
     </property>
    </widget>
    <widget class="QDateEdit" name="datePicker2">
@@ -123,13 +149,30 @@ border: 2px solid #6ad487;</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QDateEdit {
+background-color: white;
 border-radius: 10;
 color: black; 
-border: 2px solid #6ad487;</string>
+border: 2px solid #6ad487;
+}
+
+
+QDateEdit:hover {
+
+	
+
+	border-color: rgb(255, 255, 255);
+
+
+
+}
+</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
     </property>
    </widget>
    <widget class="QPushButton" name="showPlotButton">
@@ -148,10 +191,19 @@ border: 2px solid #6ad487;</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QPushButton{
+background-color: white;
 border-radius: 40;
 color: black; 
-border: 2px solid #6ad487;</string>
+
+}
+
+
+
+QPushButton:hover {
+	border: 2px solid white;
+}
+</string>
     </property>
     <property name="text">
      <string/>

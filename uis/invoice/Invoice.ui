@@ -20,8 +20,8 @@
    <property name="geometry">
     <rect>
      <x>200</x>
-     <y>90</y>
-     <width>21</width>
+     <y>100</y>
+     <width>31</width>
      <height>31</height>
     </rect>
    </property>
@@ -33,10 +33,19 @@
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: white;
+    <string notr="true">QPushButton{
+background-color: white;
 border-radius: 20;
 color: black; 
-border: 2px solid #ffff;</string>
+border: 2px solid #ffff;
+}
+
+QPushButton:hover{
+	
+	border: 2px solid rgb(106, 212, 135);
+	border-radius: 5;
+}
+</string>
    </property>
    <property name="text">
     <string>+</string>
@@ -46,8 +55,8 @@ border: 2px solid #ffff;</string>
    <property name="geometry">
     <rect>
      <x>200</x>
-     <y>130</y>
-     <width>21</width>
+     <y>135</y>
+     <width>31</width>
      <height>31</height>
     </rect>
    </property>
@@ -59,10 +68,20 @@ border: 2px solid #ffff;</string>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: white;
+    <string notr="true">QPushButton{
+background-color: white;
 border-radius: 20;
 color: black; 
-border: 2px solid #ffff;</string>
+border: 2px solid #ffff;
+}
+
+QPushButton:hover{
+	
+
+	border: 2px solid rgb(106, 212, 135);
+	border-radius: 5;
+}
+</string>
    </property>
    <property name="text">
     <string>-</string>
@@ -232,10 +251,19 @@ border: 2px solid #6ad487;</string>
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QPushButton{
+background-color: white;
 border-radius: 20;
 color: black; 
-border: 2px solid #ffff;</string>
+
+}
+
+
+
+QPushButton:hover {
+	border: 2px solid white;
+}
+</string>
     </property>
     <property name="text">
      <string/>
@@ -261,13 +289,30 @@ border: 2px solid #ffff;</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QDateEdit {
+background-color: white;
 border-radius: 10;
 color: black; 
-border: 2px solid #6ad487;</string>
+border: 2px solid #6ad487;
+}
+
+
+QDateEdit:hover {
+
+	
+
+	border-color: rgb(255, 255, 255);
+
+
+
+}
+</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
+    </property>
+    <property name="buttonSymbols">
+     <enum>QAbstractSpinBox::NoButtons</enum>
     </property>
    </widget>
    <widget class="QPushButton" name="deleteButton">
@@ -288,10 +333,23 @@ border: 2px solid #6ad487;</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QPushButton{
+background-color: white;
 border-radius: 20;
 color: black; 
-border: 2px solid #6ad487;</string>
+border: 2px solid #6ad487;
+}
+
+QPushButton:hover {
+
+	
+	background-color: rgb(107, 216, 137);
+	border-color: rgb(255, 255, 255);
+	selection-color: rgb(92, 186, 117);
+	font: 57 15pt &quot;Dubai Medium&quot;;
+	color: white;
+}
+</string>
     </property>
     <property name="text">
      <string>Delete</string>
@@ -302,7 +360,7 @@ border: 2px solid #6ad487;</string>
      <rect>
       <x>10</x>
       <y>150</y>
-      <width>91</width>
+      <width>90</width>
       <height>121</height>
      </rect>
     </property>
@@ -313,10 +371,23 @@ border: 2px solid #6ad487;</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: white;
+     <string notr="true">QPushButton{
+background-color: white;
 border-radius: 20;
 color: black; 
-border: 2px solid #6ad487;</string>
+border: 2px solid #6ad487;
+}
+
+QPushButton:hover {
+
+	
+	background-color: rgb(107, 216, 137);
+	border-color: rgb(255, 255, 255);
+	selection-color: rgb(92, 186, 117);
+	font: 57 15pt &quot;Dubai Medium&quot;;
+	color: white;
+}
+</string>
     </property>
     <property name="text">
      <string>Save</string>
@@ -485,10 +556,19 @@ border: 2px solid white;</string>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: #6ad487;
+    <string notr="true">QPushButton{
+background-color: #6ad487;
 border-radius: 20;
 color: white; 
-border: 2px solid #6ad487;</string>
+border: 2px solid #6ad487;
+}
+QPushButton:hover{
+
+	background-color:rgb(101, 204, 129);
+
+
+
+}</string>
    </property>
    <property name="text">
     <string>Calculate</string>
