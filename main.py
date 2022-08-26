@@ -5,7 +5,7 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt6 import QtWidgets
+from PyQt6 import QtWidgets, QtGui
 from PyQt6.QtWidgets import *
 from PyQt6.uic import loadUi
 from dateutil import relativedelta
@@ -266,7 +266,7 @@ class Invoice(QDialog):
 
 
 class Plots(QDialog):
-    plot_type = 1
+    plot_type = 0
 
     def __init__(self):
         super(Plots, self).__init__()
@@ -286,12 +286,12 @@ class Plots(QDialog):
 
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-        fig, ax = plt.subplots()
-        canvas = FigureCanvas(fig)
+        self.fig, self.ax = plt.subplots()
+        canvas = FigureCanvas(self.fig)
         proxy_widget = QtWidgets.QGraphicsProxyWidget()
         proxy_widget.setWidget(canvas)
         self.scene.addItem(proxy_widget)
-        fig.tight_layout()
+        self.fig.tight_layout()
 
     def date(self, sdate, edate):
         dates = []
@@ -475,6 +475,7 @@ class Plots(QDialog):
             return xc
 
     def show_func_goods(self):
+        self.View.deleteLater()
         self.plot_type = 1
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
@@ -531,12 +532,24 @@ class Plots(QDialog):
         else:
             x = x[:-1]
 
-        fig, ax = plt.subplots()
+        width = self.width()
+        height = self.height()
 
-        ax.plot(x, y, 'o')
-        # ax.xticks(x, xc)
+        fcoef = width / 960
+        scoef = height / 620
+
+        fsize = fcoef * 760
+        ssize = scoef * 500
+
+        self.fig, self.ax = plt.subplots()
+
+        self.fig.set_figwidth(fsize / self.fig.dpi)
+        self.fig.set_figheight(ssize / self.fig.dpi)
+
+        self.ax.plot(x, y, 'o')
+        # self.ax.xticks(x, xc)
         # Настраиваем вид основных тиков:
-        ax.tick_params(axis='both',  # Применяем параметры к обеим осям
+        self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
                        which='major',  # Применяем параметры к основным делениям
                        direction='inout',  # Рисуем деления внутри и снаружи графика
                        length=10,  # Длинна делений
@@ -556,22 +569,24 @@ class Plots(QDialog):
                        labelrotation=90)  # Поворот подписей
 
         # Добавляем линии основной сетки:
-        # ax.grid()
+        # self.ax.grid()
 
         # Включаем видимость вспомогательных делений:
-        ax.minorticks_on()
-        ax.xaxis.set_minor_locator(ticker.NullLocator())
-        canvas = FigureCanvas(fig)
+        self.ax.minorticks_on()
+        self.ax.xaxis.set_minor_locator(ticker.NullLocator())
+        canvas = FigureCanvas(self.fig)
         proxy_widget = QtWidgets.QGraphicsProxyWidget()
         proxy_widget.setWidget(canvas)
         self.scene.addItem(proxy_widget)
         # plt.xlim([0, 25])
-        self.View.resize(760, 500)
-        fig.tight_layout()
-        # fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
+        self.View.resize(int(fsize), int(ssize))
+        self.fig.tight_layout()
+        # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
         self.View.show()
+        #self.plotResize()
 
     def show_func_earnings(self):
+        self.View.deleteLater()
         self.plot_type = 2
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
@@ -619,30 +634,43 @@ class Plots(QDialog):
         # y1 = earnings
 
         # plt.plot(np.arange(0,5, 0.2))
-        fig, ax = plt.subplots()
 
-        # ax.set_xticks(dates)
-        # fig.gca()
+        width = self.width()
+        height = self.height()
+
+        fcoef = width / 960
+        scoef = height / 620
+
+        fsize = fcoef * 760
+        ssize = scoef * 500
+
+        self.fig, self.ax = plt.subplots()
+
+        self.fig.set_figwidth(fsize / self.fig.dpi)
+        self.fig.set_figheight(ssize / self.fig.dpi)
+
+        # self.ax.set_xticks(dates)
+        # self.fig.gca()
         # plt.plot_date(x, y)
 
         # plt.subplot(1,3,1)
 
         # plt.plot_date(x,y1)
         # plt.subplot(1,3,2)
-        ax.plot(x, y1, 'ro')
+        self.ax.plot(x, y1, 'ro')
 
-        # ax.grid()
+        # self.ax.grid()
         # plt.fill(dates, y)
-        # ax.grid()
+        # self.ax.grid()
         # Устанавливаем интервал основных и
         # вспомогательных делений:
-        # ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
-        # ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-        # ax.yaxis.set_major_locator(ticker.MultipleLocator(base=20))
-        # ax.yaxis.set_minor_locator(ticker.MultipleLocator(50))
+        # self.ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
+        # self.ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
+        # self.ax.yaxis.set_major_locator(ticker.MultipleLocator(base=20))
+        # self.ax.yaxis.set_minor_locator(ticker.MultipleLocator(50))
 
         # Настраиваем вид основных тиков:
-        ax.tick_params(axis='both',  # Применяем параметры к обеим осям
+        self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
                        which='major',  # Применяем параметры к основным делениям
                        direction='inout',  # Рисуем деления внутри и снаружи графика
                        length=10,  # Длинна делений
@@ -662,37 +690,40 @@ class Plots(QDialog):
                        labelrotation=90)  # Поворот подписей
 
         # Добавляем линии основной сетки:
-        # ax.grid()
+        # self.ax.grid()
 
         # Включаем видимость вспомогательных делений:
-        ax.minorticks_on()
-        ax.xaxis.set_minor_locator(ticker.NullLocator())
+        self.ax.minorticks_on()
+        self.ax.xaxis.set_minor_locator(ticker.NullLocator())
 
-        # ax.grid(which='major', lw =1,
+        # self.ax.grid(which='major', lw =1,
         #
         # linestyle='-')
         #
-        # ax.grid(which='minor', lw = 1,
+        # self.ax.grid(which='minor', lw = 1,
         #
         # linestyle='-')
         #
 
         # QWebEngineView()
 
-        # fig.set_figwidth(12)
-        # fig.set_figheight(8)
-        # ax.grid()
-        canvas = FigureCanvas(fig)
+        # self.fig.set_figwidth(12)
+        # self.fig.set_figheight(8)
+        # self.ax.grid()
+        canvas = FigureCanvas(self.fig)
         proxy_widget = QtWidgets.QGraphicsProxyWidget()
         proxy_widget.setWidget(canvas)
         self.scene.addItem(proxy_widget)
         # plt.xlim([0, 25])
-        self.View.resize(760, 500)
-        fig.tight_layout()
-        # fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
+
+        self.View.resize(int(fsize), int(ssize))
+        self.fig.tight_layout()
+        # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
         self.View.show()
+        #self.plotResize()
 
     def show_func_bar(self):
+        self.View.deleteLater()
         self.plot_type = 3
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
@@ -745,11 +776,23 @@ class Plots(QDialog):
             print(b)
 
             b = np.array(b)
-            fig, ax = plt.subplots()
+            width = self.width()
+            height = self.height()
 
-            ax.bar(list(range(len(b))), b[:, 1])
+            fcoef = width / 960
+            scoef = height / 620
+
+            fsize = fcoef * 760
+            ssize = scoef * 450
+
+            self.fig, self.ax = plt.subplots()
+
+            self.fig.set_figwidth(fsize / self.fig.dpi)
+            self.fig.set_figheight(ssize / self.fig.dpi)
+
+            self.ax.bar(list(range(len(b))), b[:, 1])
             plt.xticks(list(range(len(b))), labels=b[:, 0])
-            ax.tick_params(axis='both',  # Применяем параметры к обеим осям
+            self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
                            which='major',  # Применяем параметры к основным делениям
                            direction='inout',  # Рисуем деления внутри и снаружи графика
                            length=10,  # Длинна делений
@@ -769,32 +812,34 @@ class Plots(QDialog):
                            labelrotation=90)  # Поворот подписей
 
             # Добавляем линии основной сетки:
-            # ax.grid()
+            # self.ax.grid()
 
             # Включаем видимость вспомогательных делений:
-            ax.minorticks_on()
-            ax.xaxis.set_minor_locator(ticker.NullLocator())
-            canvas = FigureCanvas(fig)
+            self.ax.minorticks_on()
+            self.ax.xaxis.set_minor_locator(ticker.NullLocator())
+            canvas = FigureCanvas(self.fig)
             proxy_widget = QtWidgets.QGraphicsProxyWidget()
             proxy_widget.setWidget(canvas)
             self.scene.addItem(proxy_widget)
             # plt.xlim([0, 25])
             #1.26 1.26
-            self.View.resize(760, 500)
-            fig.tight_layout()
-            # fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
+            self.View.resize(int(fsize), int(ssize))
+            self.fig.tight_layout()
+            # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
         else:
             self.scene = QtWidgets.QGraphicsScene()
             self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-            fig, ax = plt.subplots()
-            canvas = FigureCanvas(fig)
+            self.fig, self.ax = plt.subplots()
+            canvas = FigureCanvas(self.fig)
             proxy_widget = QtWidgets.QGraphicsProxyWidget()
             proxy_widget.setWidget(canvas)
             self.scene.addItem(proxy_widget)
-            fig.tight_layout()
+            self.fig.tight_layout()
         self.View.show()
+        #self.plotResize()
 
     def show_func_pie(self):
+        self.View.deleteLater()
         self.plot_type = 4
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
@@ -836,31 +881,43 @@ class Plots(QDialog):
         # y1 = earnings
 
         # plt.plot(np.arange(0,5, 0.2))
-        fig, ax = plt.subplots()
+        width = self.width()
+        height = self.height()
 
-        # ax.set_xticks(dates)
-        # fig.gca()
+        fcoef = width / 960
+        scoef = height / 620
+
+        fsize = fcoef * 760
+        ssize = scoef * 500
+
+        self.fig, self.ax = plt.subplots()
+
+        self.fig.set_figwidth(fsize / self.fig.dpi)
+        self.fig.set_figheight(ssize / self.fig.dpi)
+
+        # self.ax.set_xticks(dates)
+        # self.fig.gca()
         # plt.plot_date(x, y)
 
         # plt.subplot(1,3,1)
 
         # plt.plot_date(x,y1)
         # plt.subplot(1,3,2)
-        # ax.pie(y1, labels = x)
-        ax.pie(y1)
-        ax.legend(x, loc='center left', bbox_to_anchor=(0.4, 0.5))
-        # ax.grid()
+        # self.ax.pie(y1, labels = x)
+        self.ax.pie(y1)
+        self.ax.legend(x, loc='center left', bbox_to_anchor=(0.4, 0.5))
+        # self.ax.grid()
         # plt.fill(dates, y)
-        # ax.grid()
+        # self.ax.grid()
         # Устанавливаем интервал основных и
         # вспомогательных делений:
-        # ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
-        # ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-        # ax.yaxis.set_major_locator(ticker.MultipleLocator(base=20))
-        # ax.yaxis.set_minor_locator(ticker.MultipleLocator(50))
+        # self.ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
+        # self.ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
+        # self.ax.yaxis.set_major_locator(ticker.MultipleLocator(base=20))
+        # self.ax.yaxis.set_minor_locator(ticker.MultipleLocator(50))
 
         # Настраиваем вид основных тиков:
-        ax.tick_params(axis='both',  # Применяем параметры к обеим осям
+        self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
                        which='major',  # Применяем параметры к основным делениям
                        direction='inout',  # Рисуем деления внутри и снаружи графика
                        length=10,  # Длинна делений
@@ -880,50 +937,83 @@ class Plots(QDialog):
                        labelrotation=90)  # Поворот подписей
 
         # Добавляем линии основной сетки:
-        # ax.grid()
+        # self.ax.grid()
 
         # Включаем видимость вспомогательных делений:
-        ax.minorticks_on()
-        ax.xaxis.set_minor_locator(ticker.NullLocator())
+        self.ax.minorticks_on()
+        self.ax.xaxis.set_minor_locator(ticker.NullLocator())
 
-        # ax.grid(which='major', lw =1,
+        # self.ax.grid(which='major', lw =1,
         #
         # linestyle='-')
         #
-        # ax.grid(which='minor', lw = 1,
+        # self.ax.grid(which='minor', lw = 1,
         #
         # linestyle='-')
         #
 
         # QWebEngineView()
 
-        # fig.set_figwidth(12)
-        # fig.set_figheight(8)
-        # ax.grid()
-        canvas = FigureCanvas(fig)
+        # self.fig.set_figwidth(12)
+        # self.fig.set_figheight(8)
+        # self.ax.grid()
+        canvas = FigureCanvas(self.fig)
         proxy_widget = QtWidgets.QGraphicsProxyWidget()
         proxy_widget.setWidget(canvas)
         self.scene.addItem(proxy_widget)
         # plt.xlim([0, 25])
-        self.View.resize(760, 500)
-        fig.tight_layout()
-        # fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
+        self.View.resize(int(fsize), int(ssize))
+        self.fig.tight_layout()
+        # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
         self.View.show()
+        #self.plotResize()
 
     def resizeEvent(self, event):
-        self.plotResize()
+        #self.plotResize()
         print("gav")
 
     def plotResize(self):
-        width = self.width()
-        height = self.height()
+        if self.plot_type == 1:
+            self.show_func_goods()
+        elif self.plot_type == 2:
+            self.show_func_earnings()
+        elif self.plot_type == 3:
+            self.show_func_bar()
+        elif self.plot_type == 4:
+            self.show_func_pie()
+        #self.View.resetTransform()
+        #width = self.width()
+        #height = self.height()
+
+        #fcoef = width / 960
+        #scoef = height / 620
+
+        #fsize = fcoef * 760
+        #ssize = scoef * 500
+
+        #self.scene = QtWidgets.QGraphicsScene()
+        #self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
         #self.View.resize(int(width / 1.25), int(height / 1.25))
         #scene = QtWidgets.QGraphicsScene(height, height, width, height)
-        #self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-        self.View.fitInView(self.scene.sceneRect())
+        #tr = QtGui.QTransform()
+        #tr.scale(fcoef, scoef)
+        #self.scene = scene
+        #self.fig.tight_layout()
+        #self.scene = QtWidgets.QGraphicsScene()
+
+        #a, b = self.fig.get_size_inches()*self.fig.dpi
+        #self.fig.set_figwidth(fsize / self.fig.dpi)
+        #self.fig.set_figheight(ssize / self.fig.dpi)
+
+        #canvas = FigureCanvas(self.fig)
+        #proxy_widget = QtWidgets.QGraphicsProxyWidget()
+        #proxy_widget.setWidget(canvas)
+        #self.scene.addItem(proxy_widget)
+        #self.View.show()
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)
+        self.plot_type = 0
 
 
 class Reports(QDialog):
