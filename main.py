@@ -334,7 +334,8 @@ class Plots(QDialog):
                 for i in range(2, d + 1):
                     mas.append(str(year1 + i) + '-01-01')
 
-            mas.append(x[-1])
+            if x[-1] not in mas:
+                mas.append(x[-1])
 
             return mas
 
@@ -362,11 +363,11 @@ class Plots(QDialog):
             firstMonday = self.toDate(x[0]) + timedelta(days=-self.toDate(x[0]).weekday(), weeks=1)
             firstMonday = self.toString(firstMonday)
 
-            xc = [x[0]]
-            xc.extend(x[x.index(firstMonday):-1:7])
-            xc.append(x[-1])
+            xDates = [x[0]]
+            xDates.extend(x[x.index(firstMonday):-1:7])
+            xDates.append(x[-1])
 
-            return xc
+            return xDates
 
     def startPlot(self, index):
         self.plot_type = index
@@ -396,7 +397,6 @@ class Plots(QDialog):
         self.show_func_plot(x, y, "earning")
 
     def show_func_plot(self, x, y, subject):
-
         for i in range(len(x) - 1):
             select = "select sum(" + subject + ") from invoices where date >= '" + x[i] + "' and date < '" + x[i + 1] + "'"
             result = dbutil.select(select)
@@ -406,64 +406,51 @@ class Plots(QDialog):
             if not y[i]:
                 y[i] = 0
 
-        xc = []
-        xcc = []
-        xcc_count = []
+        xDates = []
+        xYears = [x[0][:4]]
+        xYearsCount = [0]
         xtickstop = []
 
         if self.radio_Years.isChecked():
+            for i in range(1, len(x)):
+                if x[i][:4] not in xYears:
+                    xYears.append(x[i][:4])
+                    xYearsCount.append(i)
+
+            x = xYears
+        else:
             for i in range(len(x) - 1):
-                xc.append(x[i] + " - " + x[i + 1])
-        elif self.radio_Auto.isChecked():
-            for i in range(len(x) - 1):
-                currentDate = x[i] + " - " + self.toString(self.toDate(x[i + 1]) - relativedelta(days=1))
-                xc.append(currentDate)
+                xDates.append(x[i] + " - " + self.toString(self.toDate(x[i + 1]) - relativedelta(days=1)))
 
-                if xc[i][0:4] not in xcc:
-                    xcc.append(xc[i][0:4])
-                    xcc_count.append(i)
+                xtickstop.append(xDates[-1][5:10] + ' - ' + xDates[-1][18:])
 
-                if xc[i][13:17] not in xcc:
-                    xcc.append(xc[i][13:17])
-                    xcc_count.append(i)
+                if xDates[i][13:17] not in xYears:
+                    xYears.append(xDates[i][13:17])
+                    xYearsCount.append(i)
 
-                xtickstop.append(xc[-1][5:10] + ' - ' + xc[-1][18:])
+            if xDates[-1][13:17] not in xYears:
+                xYears.append(xDates[-1][13:17])
+                xYearsCount.append(len(x))
 
-            if xc[-1][0:4] not in xcc:
-                xcc.append(xc[-1][0:4])
-                xcc_count.append(-1)
-
-            if xc[-1][13:17] not in xcc:
-                xcc.append(xc[-1][13:17])
-                xcc_count.append(-1)
-
-            xc = xtickstop
-        elif self.radio_Months.isChecked():
-            for i in range(len(x) - 1):
-                xc.append(x[i] + " - " + datetime.strftime(
-                    (self.toDate(x[i + 1]) - relativedelta(days=1)), '%Y-%m-%d'))
-        elif self.radio_Weeks.isChecked():
-            for i in range(len(x) - 1):
-                xc.append(x[i] + " - " + datetime.strftime(
-                    (self.toDate(x[i + 1]) - relativedelta(days=1)), '%Y-%m-%d'))
-
-        x = xc
+            x = xDates
 
         self.instantResize()
 
         self.ax.plot(x, y, 'o', color='black', markersize=3)
         self.ax.plot(x, y, color='#6ad487')
 
-        self.ax_t = self.ax.secondary_xaxis('top')
-        self.ax_t.minorticks_on()
-        self.ax_t.xaxis.set_minor_locator(ticker.NullLocator())
+        if not self.radio_Years.isChecked():
+            self.ax.set_xticks(x, labels=xtickstop)
 
-        self.ax_t.set_xticks([a for a in xcc_count], labels=xcc)
+            self.ax_t = self.ax.secondary_xaxis('top')
+            self.ax_t.minorticks_on()
+            self.ax_t.xaxis.set_minor_locator(ticker.NullLocator())
+            self.ax_t.set_xticks(xYearsCount, labels=xYears)
 
-        self.ax_t.tick_params(axis='x', direction='inout')
+            self.ax_t.tick_params(axis='x', direction='inout')
 
-        self.ax_t.tick_params(axis='both', which='major', direction='inout', length=10, width=1, color='black', pad=10,
-                         labelsize=10, labelcolor='black', labelrotation=45)
+            self.ax_t.tick_params(axis='both', which='major', direction='inout', length=10, width=1, color='black', pad=10,
+                             labelsize=10, labelcolor='black', labelrotation=45)
 
         self.endPlot()
 
