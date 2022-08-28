@@ -5,7 +5,7 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt6 import QtWidgets, QtGui
+from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import *
 from PyQt6.uic import loadUi
 from dateutil import relativedelta
@@ -267,10 +267,13 @@ class Invoice(QDialog):
 
 class Plots(QDialog):
     plot_type = 0
+    current_width = 960
+    current_height = 620
 
     def __init__(self):
         super(Plots, self).__init__()
         loadUi("uis/plots/Plots.ui", self)
+
         self.radio_Auto.toggle()
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.showPlotButton.clicked.connect(self.show_func_pie)
@@ -279,29 +282,26 @@ class Plots(QDialog):
         self.bar_Button.clicked.connect(self.show_func_bar)
         self.pie_Button.clicked.connect(self.show_func_pie)
 
-        second_date = date.today()
-        first_date = date.today() - timedelta(days=30)
-        self.datePicker1.setDate(first_date)
-        self.datePicker2.setDate(second_date)
+        self.datePicker1.setDate(date.today() - timedelta(days=30))
+        self.datePicker2.setDate(date.today())
 
-        self.scene = QtWidgets.QGraphicsScene()
-        self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-        self.fig, self.ax = plt.subplots()
-        canvas = FigureCanvas(self.fig)
-        proxy_widget = QtWidgets.QGraphicsProxyWidget()
-        proxy_widget.setWidget(canvas)
-        self.scene.addItem(proxy_widget)
-        self.fig.tight_layout()
+        self.startPlot(0)
 
-    def date(self, sdate, edate):
+    def datesBetween(self, sdate, edate):
         dates = []
         delta = edate - sdate  # as timedelta
 
         for i in range(delta.days + 1):
             day = sdate + timedelta(days=i)
-            dates.append(day.strftime('%Y-%m-%d'))
+            dates.append(self.toString(day))
 
         return dates
+
+    def toDate(self, date):
+        return datetime.strptime(date, '%Y-%m-%d')
+
+    def toString(self, date):
+        return date.strftime('%Y-%m-%d')
 
     def radio_buttons(self, x):
         if self.radio_Auto.isChecked():
@@ -309,33 +309,26 @@ class Plots(QDialog):
                 if (len(x) > 12):
                     d = ceil(len(x) / 12)
                     x = x[::d]
+
                 return x
             else:
                 if len(x) > 31:  # для двух
                     a = int(len(x) / 30)
                     x = x[::a]
+
                 return x
 
         elif self.radio_Years.isChecked():
-            year = x[0][0:4]
-            date3 = self.datePicker1.date().toPyDate()
-            date4 = self.datePicker2.date().toPyDate()
-            date3 = date3.strftime('%Y-%m-%d')
-            date4 = date4.strftime('%Y-%m-%d')
-            year1 = int(date3[:4])
-            year2 = int(date4[:4])
-            d = int(date4[:4]) - int(date3[:4])  # разница
-            mas = []
-            mas.append(x[0])
+            date1 = self.toString(self.datePicker1.date().toPyDate())
+            date2 = self.toString(self.datePicker2.date().toPyDate())
+            d = int(date2[:4]) - int(date1[:4])
+
+            year1 = int(date1[:4])
+
+            mas = [x[0]]
+
             if d > 0:
                 mas.append(str(year1 + 1) + '-01-01')
-            # date = date4 - date3
-
-            # print(date)
-
-            counter = 1
-            copy = []
-            copy.append(x[0])
 
             if d >= 2:
                 for i in range(2, d + 1):
@@ -344,672 +337,233 @@ class Plots(QDialog):
             mas.append(x[-1])
 
             return mas
-            # print("shffhs")
-            # print(x[3].find(str(int(year)+1)))
-            # str((datetime.strptime(x[i + 1], '%Y-%m-%d')
-            # while (x.findyear[0:4] + counter ) != -1:
-            #     print("asdasd")
-            #     copy.append(x.find(int(year[0:4]) + counter))
-            #
-            #     counter+=1
-            # print(year)
-            # print(x[0])
-            # print(x[0].find(str(int(year) + counter)))
-            # #counter = counter + 1
-            # print("ahgh")
-            # for i in x:
-            #     if i.find(str(int(year) + counter)) == 0:
-            #         print(i.find(str(int(year) + counter)))
-            #         copy.append(i)
-            #         counter+=1
-
 
         elif self.radio_Months.isChecked():
-
-            # month = x[0][5:7:1]
-
-            year1 = x[0]
-            delta = relativedelta(datetime.strptime(x[-1], '%Y-%m-%d'), datetime.strptime(x[0], '%Y-%m-%d'))
+            delta = relativedelta(self.toDate(x[-1]), self.toDate(x[0]))
             months = int(delta.years * 12 + delta.months)
-            print(months)
-            mas = []
-            first_date = date.today() - timedelta(days=30)
-            mas.append(x[0])
+            mas = [x[0]]
 
-            second = datetime.strptime(x[0], '%Y-%m-%d') + relativedelta(months=1)
-            second = second.strftime('%Y-%m-%d')[:7] + '-01'
-            second = datetime.strptime(second, '%Y-%m-%d')
-            print(second)
-            mas.append(second.strftime('%Y-%m-%d')[:7] + '-01')
+            firstDate = self.toDate(x[0]) + relativedelta(months=1)
+            firstDateNewMonth = self.toString(firstDate)[:7] + '-01'
+
+            mas.append(firstDateNewMonth)
+
+            currentDate = self.toDate(firstDateNewMonth) + relativedelta(months=1)
             for i in range(months - 1):
-                mas.append(datetime.strftime(second + relativedelta(months=1), '%Y-%m-%d'))
-                second = second + relativedelta(months=1)
+                mas.append(self.toString(currentDate))
+                currentDate += relativedelta(months=1)
 
             mas.append(x[-1])
 
-            print(mas)
-
-            # print(first)
-            # first = datetime.strptime(x[-1], '%Y-%m-%d'
-            # if months > 0:
-            #
-            #     mas.append(str(year1+1) + '-01-01')
-            # date = date4 - date3
-
-            # print(date)
-
-            # print("shffhs")
-            # print(x[3].find(str(int(year)+1)))
-            # str((datetime.strptime(x[i + 1], '%Y-%m-%d')
-            # while (x.findyear[0:4] + counter ) != -1:
-            #     print("asdasd")
-            #     copy.append(x.find(int(year[0:4]) + counter))
-            #
-            #     counter+=1
-            # print(month)
-            # print(x[0])
-            # print(x[0].find(str(int(month) + counter)))
-            # #counter = counter + 1
-            # print("ahgh")
-            # for i in x:
-            #     if i.find(str(int(month) + counter)) == 0:
-            #         print(i.find(str(int(month) + counter)))
-            #         copy.append(i)
-            #         counter+=1
-            #         month+=1
-
-            # for i in x:
-            #     for j in x:
-            #         #print(i[0:4])
-            #         print(int(j[0:4]))
-            #         if (int(i[0:4]) + 1) == int(j[0:4]):
-            #             copy.append(j)
-            #             print(i[::4], copy)
             return mas
 
 
         elif self.radio_Weeks.isChecked():
-            # year1 = x[0]
-            # monday = datetime.now()
-            monday = datetime.strptime(x[0], '%Y-%m-%d')
-            monday = monday + timedelta(days=-monday.weekday(), weeks=1)
+            firstMonday = self.toDate(x[0]) + timedelta(days=-self.toDate(x[0]).weekday(), weeks=1)
+            firstMonday = self.toString(firstMonday)
 
-            lastmonday = datetime.strptime(x[-1], '%Y-%m-%d')
-            lastmonday = lastmonday
-
-            # - timedelta(days=-lastmonday.weekday(), weeks=1)
-            print(lastmonday)
-
-            monday = monday.strftime('%Y-%m-%d')
-            lastmonday = lastmonday.strftime('%Y-%m-%d')
-            print(lastmonday)
-            mon = x.index(monday)
-            lmon = x.index(lastmonday)
-            print(lmon)
-            xc = []
-            xc.append(x[0])
-
-            xc.extend(x[mon:lmon:7])
+            xc = [x[0]]
+            xc.extend(x[x.index(firstMonday):-1:7])
             xc.append(x[-1])
-            # year1 = x[0]
-            # delta = relativedelta(datetime.strptime(x[-1], '%Y-%m-%d'), datetime.strptime(x[0], '%Y-%m-%d'))
-            # months = int(delta.years * 12 + delta.months)
-            # print(months)
-            # mas = []
-            # first_date = date.today() - timedelta(days=30)
-            # mas.append(x[0])
-            #
-            # second = datetime.strptime(x[0], '%Y-%m-%d') + relativedelta(months=1)
-            # second = second.strftime('%Y-%m-%d')[:7] + '-01'
-            # second = datetime.strptime(second, '%Y-%m-%d')
-            # print(second)
-            # mas.append(second.strftime('%Y-%m-%d')[:7] + '-01')
-            # for i in range(months-1):
-            #     mas.append(datetime.strftime(second + relativedelta(months=1), '%Y-%m-%d'))
-            #     second = second + relativedelta(months=1)
-            #
-            # mas.append(x[-1])
 
-            # print(mas)
-            print(xc)
             return xc
 
-    def show_func_goods(self):
-        self.View.deleteLater()
-        self.plot_type = 1
+    def startPlot(self, index):
+        self.plot_type = index
+
+        if index:
+            self.View.deleteLater()
+
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-        date3 = self.datePicker1.date().toPyDate()
-        date4 = self.datePicker2.date().toPyDate() + timedelta(days=1)
-        dates = self.date(date3, date4)
 
-        y = []
+        date1 = self.datePicker1.date().toPyDate()
+        date2 = self.datePicker2.date().toPyDate() + timedelta(days=1)
 
-        x = self.radio_buttons(dates)
+        self.fig, self.ax = plt.subplots()
+
+        if index:
+            return self.radio_buttons(self.datesBetween(date1, date2)), []
+
+    def show_func_goods(self):
+        x, y = self.startPlot(1)
+
+        self.show_func_plot(x, y, "goods")
+
+    def show_func_earnings(self):
+        x, y = self.startPlot(2)
+
+        self.show_func_plot(x, y, "earning")
+
+    def show_func_plot(self, x, y, subject):
 
         for i in range(len(x) - 1):
-            date1 = x[i]
-            date2 = x[i + 1]
-            select = "select sum(goods) from invoices where date >= '" + date1 + "' and date < '" + date2 + "'"
+            select = "select sum(" + subject + ") from invoices where date >= '" + x[i] + "' and date < '" + x[i + 1] + "'"
             result = dbutil.select(select)
+
             y.append(result[0][0])
+
             if not y[i]:
                 y[i] = 0
 
-        # + relativedelta(months=1)
-
-        # second = datetime.strptime(second, '%Y-%m-%d')
-        # print(second)
-        # mas.append(second.strftime('%Y-%m-%d')[:7] + '-01')
-        #
-        #
-
-        # if len(x) != 1:
-        xc = []  # xcopy
-        if self.plot_type == 1:
-
-            if self.radio_Years.isChecked():
-                for i in range(len(x) - 1):
-                    xc.append(x[i] + " - " + x[i + 1])
-                x = xc
-            elif self.radio_Auto.isChecked():
-                for i in range(len(x) - 1):
-                    xc.append(x[i] + " - " + datetime.strftime(
-                        (datetime.strptime(x[i + 1], '%Y-%m-%d') - relativedelta(days=1)), '%Y-%m-%d'))
-                x = xc
-            elif self.radio_Months.isChecked():
-                for i in range(len(x) - 1):
-                    xc.append(x[i] + " - " + datetime.strftime(
-                        (datetime.strptime(x[i + 1], '%Y-%m-%d') - relativedelta(days=1)), '%Y-%m-%d'))
-                x = xc
-
-            elif self.radio_Weeks.isChecked():
-                for i in range(len(x) - 1):
-                    xc.append(x[i] + " - " + datetime.strftime(
-                        (datetime.strptime(x[i + 1], '%Y-%m-%d') - relativedelta(days=1)), '%Y-%m-%d'))
-                x = xc
-
-        else:
-            x = x[:-1]
-
-        width = self.width()
-        height = self.height()
-
-        fcoef = width / 960
-        scoef = height / 620
-
-        fsize = fcoef * 760
-        ssize = scoef * 500
-
-        self.fig, self.ax = plt.subplots()
-
-        self.fig.set_figwidth(fsize / self.fig.dpi)
-        self.fig.set_figheight(ssize / self.fig.dpi)
-
-        self.ax.plot(x, y, 'o')
-        # self.ax.xticks(x, xc)
-        # Настраиваем вид основных тиков:
-        self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
-                       which='major',  # Применяем параметры к основным делениям
-                       direction='inout',  # Рисуем деления внутри и снаружи графика
-                       length=10,  # Длинна делений
-                       width=2,  # Ширина делений
-                       color='m',  # Цвет делений
-                       pad=10,  # Расстояние между черточкой и ее подписью
-                       labelsize=10,  # Размер подписи
-                       labelcolor='purple',  # Цвет подписи
-                       # bottom=True, # Рисуем метки снизу
-                       # top=True, # сверху
-                       # left=True, # слева
-                       # right=True, # и справа
-                       # labelbottom=True, # Рисуем подписи снизу
-                       # labeltop=True, # сверху
-                       # labelleft=True, # слева
-                       # labelright=True, # и справа
-                       labelrotation=90)  # Поворот подписей
-
-        # Добавляем линии основной сетки:
-        # self.ax.grid()
-
-        # Включаем видимость вспомогательных делений:
-        self.ax.minorticks_on()
-        self.ax.xaxis.set_minor_locator(ticker.NullLocator())
-        canvas = FigureCanvas(self.fig)
-        proxy_widget = QtWidgets.QGraphicsProxyWidget()
-        proxy_widget.setWidget(canvas)
-        self.scene.addItem(proxy_widget)
-        # plt.xlim([0, 25])
-        self.View.resize(int(fsize), int(ssize))
-        self.fig.tight_layout()
-        # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
-        self.View.show()
-        #self.plotResize()
-
-    def show_func_earnings(self):
-        self.View.deleteLater()
-        self.plot_type = 2
-        self.scene = QtWidgets.QGraphicsScene()
-        self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-
-        date3 = self.datePicker1.date().toPyDate()
-        date4 = self.datePicker2.date().toPyDate() + timedelta(days=1)
-        dates = self.date(date3, date4)
-
-        y1 = []
-
-        x = self.radio_buttons(dates)
-        for i in range(len(x) - 1):
-            date1 = x[i]
-            date2 = x[i + 1]
-            select = "select sum(earning) from invoices where date >= '" + date1 + "' and date < '" + date2 + "'"
-            result = dbutil.select(select)
-            y1.append(result[0][0])
-            if not y1[i]:
-                y1[i] = 0
-
         xc = []
-        if self.plot_type == 2 and self.radio_Years.isChecked():
+        xcc = []
+        xcc_count = []
+        xtickstop = []
+
+        if self.radio_Years.isChecked():
             for i in range(len(x) - 1):
                 xc.append(x[i] + " - " + x[i + 1])
-            x = xc
+        elif self.radio_Auto.isChecked():
+            for i in range(len(x) - 1):
+                currentDate = x[i] + " - " + self.toString(self.toDate(x[i + 1]) - relativedelta(days=1))
+                xc.append(currentDate)
 
-        else:
-            x = x[:-1]
+                if xc[i][0:4] not in xcc:
+                    xcc.append(xc[i][0:4])
+                    xcc_count.append(i)
 
-        # select = "select goods, earning, date from invoices where date between '" + date1 + "' and '" + date2 + "'"
-        # result = dbutil.select(select)
-        # goods = [a[0] for a in result]
-        # earnings = [a[1] for a in result]
-        # date = [a[2] for a in result]
+                if xc[i][13:17] not in xcc:
+                    xcc.append(xc[i][13:17])
+                    xcc_count.append(i)
 
-        # for i in dates:
-        # if i in date:
-        # y.append(goods[date.index(i)])
-        # y1.append(earnings[date.index(i)])
-        # else:
-        # y.append(0)
-        # y1.append(0)
+                xtickstop.append(xc[-1][5:10] + ' - ' + xc[-1][18:])
 
-        # y = goods
-        # y1 = earnings
+            if xc[-1][0:4] not in xcc:
+                xcc.append(xc[-1][0:4])
+                xcc_count.append(-1)
 
-        # plt.plot(np.arange(0,5, 0.2))
+            if xc[-1][13:17] not in xcc:
+                xcc.append(xc[-1][13:17])
+                xcc_count.append(-1)
 
-        width = self.width()
-        height = self.height()
+            xc = xtickstop
+        elif self.radio_Months.isChecked():
+            for i in range(len(x) - 1):
+                xc.append(x[i] + " - " + datetime.strftime(
+                    (self.toDate(x[i + 1]) - relativedelta(days=1)), '%Y-%m-%d'))
+        elif self.radio_Weeks.isChecked():
+            for i in range(len(x) - 1):
+                xc.append(x[i] + " - " + datetime.strftime(
+                    (self.toDate(x[i + 1]) - relativedelta(days=1)), '%Y-%m-%d'))
 
-        fcoef = width / 960
-        scoef = height / 620
+        x = xc
 
-        fsize = fcoef * 760
-        ssize = scoef * 500
+        self.instantResize()
 
-        self.fig, self.ax = plt.subplots()
+        self.ax.plot(x, y, 'o', color='black', markersize=3)
+        self.ax.plot(x, y, color='#6ad487')
 
-        self.fig.set_figwidth(fsize / self.fig.dpi)
-        self.fig.set_figheight(ssize / self.fig.dpi)
+        self.ax_t = self.ax.secondary_xaxis('top')
+        self.ax_t.minorticks_on()
+        self.ax_t.xaxis.set_minor_locator(ticker.NullLocator())
 
-        # self.ax.set_xticks(dates)
-        # self.fig.gca()
-        # plt.plot_date(x, y)
+        self.ax_t.set_xticks([a for a in xcc_count], labels=xcc)
 
-        # plt.subplot(1,3,1)
+        self.ax_t.tick_params(axis='x', direction='inout')
 
-        # plt.plot_date(x,y1)
-        # plt.subplot(1,3,2)
-        self.ax.plot(x, y1, 'ro')
+        self.ax_t.tick_params(axis='both', which='major', direction='inout', length=10, width=1, color='black', pad=10,
+                         labelsize=10, labelcolor='black', labelrotation=45)
 
-        # self.ax.grid()
-        # plt.fill(dates, y)
-        # self.ax.grid()
-        # Устанавливаем интервал основных и
-        # вспомогательных делений:
-        # self.ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
-        # self.ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-        # self.ax.yaxis.set_major_locator(ticker.MultipleLocator(base=20))
-        # self.ax.yaxis.set_minor_locator(ticker.MultipleLocator(50))
-
-        # Настраиваем вид основных тиков:
-        self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
-                       which='major',  # Применяем параметры к основным делениям
-                       direction='inout',  # Рисуем деления внутри и снаружи графика
-                       length=10,  # Длинна делений
-                       width=2,  # Ширина делений
-                       color='m',  # Цвет делений
-                       pad=10,  # Расстояние между черточкой и ее подписью
-                       labelsize=10,  # Размер подписи
-                       labelcolor='purple',  # Цвет подписи
-                       # bottom=True, # Рисуем метки снизу
-                       # top=True, # сверху
-                       # left=True, # слева
-                       # right=True, # и справа
-                       # labelbottom=True, # Рисуем подписи снизу
-                       # labeltop=True, # сверху
-                       # labelleft=True, # слева
-                       # labelright=True, # и справа
-                       labelrotation=90)  # Поворот подписей
-
-        # Добавляем линии основной сетки:
-        # self.ax.grid()
-
-        # Включаем видимость вспомогательных делений:
-        self.ax.minorticks_on()
-        self.ax.xaxis.set_minor_locator(ticker.NullLocator())
-
-        # self.ax.grid(which='major', lw =1,
-        #
-        # linestyle='-')
-        #
-        # self.ax.grid(which='minor', lw = 1,
-        #
-        # linestyle='-')
-        #
-
-        # QWebEngineView()
-
-        # self.fig.set_figwidth(12)
-        # self.fig.set_figheight(8)
-        # self.ax.grid()
-        canvas = FigureCanvas(self.fig)
-        proxy_widget = QtWidgets.QGraphicsProxyWidget()
-        proxy_widget.setWidget(canvas)
-        self.scene.addItem(proxy_widget)
-        # plt.xlim([0, 25])
-
-        self.View.resize(int(fsize), int(ssize))
-        self.fig.tight_layout()
-        # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
-        self.View.show()
-        #self.plotResize()
+        self.endPlot()
 
     def show_func_bar(self):
-        self.View.deleteLater()
-        self.plot_type = 3
-        self.scene = QtWidgets.QGraphicsScene()
-        self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
+        _, _ = self.startPlot(3)
 
-        date1 = self.datePicker1.date().toString('yyyy-MM-dd')
-        date2 = self.datePicker2.date().toString('yyyy-MM-dd')
-        date3 = datetime.strftime(self.datePicker1.date().toPyDate(), '%Y-%m-%d')
-        date4 = datetime.strftime(self.datePicker2.date().toPyDate() + timedelta(days=1), '%Y-%m-%d')
+        select = """select goods.width, goods.height, goods.total_price from goods inner join invoices on invoices.id 
+                 = goods.invoice where date >= '""" + self.toString(self.datePicker1.date().toPyDate()) + \
+                 "' and date < '" + self.toString(self.datePicker2.date().toPyDate()) + "'"
 
-        select = """select goods.width, goods.height, goods.total_price
-                                    from goods
-                                    inner join invoices on invoices.id = goods.invoice 
-                                    where date >= '""" + date3 + "' and date < '" + date4 + "'"
         result = dbutil.select(select)
+
         mul = []
         for i in result:
             mul.append([i[0] * i[1], i[2]])
 
         mul.sort()
-        i = 0
-        b = []
 
-        if len(mul) > 1:
-            while True:
-                if mul[i][0] == mul[i + 1][0]:
-                    orig_i = i
-                    sum = mul[i][1]
+        if len(mul) < 1:
+            return True
 
-                    for i in range(i + 1, len(mul) - 1):
-                        if mul[i][0] != mul[orig_i][0]:
-                            i -= 1
-                            break
+        b = [mul[0]]
 
-                        sum += mul[i][1]
-
-                    b.append([mul[orig_i][0], sum])
-                else:
-                    b.append([mul[i][0], mul[i][1]])
-
-                if i > len(mul) - 3:
-                    break
-                else:
-                    i += 1
-
-            if mul[-2][0] == mul[-1][0]:
-                b[-1][1] += mul[-1][1]
+        for i in range(1, len(mul)):
+            if mul[i][0] in list(np.array(b)[:, 0]):
+                b[-1][1] += mul[i][1]
             else:
-                b.append([mul[-1][0], mul[-1][1]])
+                b.append([mul[i][0], mul[i][1]])
 
-            print(b)
+        self.instantResize()
 
-            b = np.array(b)
-            width = self.width()
-            height = self.height()
+        self.ax.bar(list(range(len(b))), np.array(b)[:, 1])
+        plt.xticks(list(range(len(b))), labels=np.array(b)[:, 0])
 
-            fcoef = width / 960
-            scoef = height / 620
-
-            fsize = fcoef * 760
-            ssize = scoef * 450
-
-            self.fig, self.ax = plt.subplots()
-
-            self.fig.set_figwidth(fsize / self.fig.dpi)
-            self.fig.set_figheight(ssize / self.fig.dpi)
-
-            self.ax.bar(list(range(len(b))), b[:, 1])
-            plt.xticks(list(range(len(b))), labels=b[:, 0])
-            self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
-                           which='major',  # Применяем параметры к основным делениям
-                           direction='inout',  # Рисуем деления внутри и снаружи графика
-                           length=10,  # Длинна делений
-                           width=2,  # Ширина делений
-                           color='m',  # Цвет делений
-                           pad=10,  # Расстояние между черточкой и ее подписью
-                           labelsize=10,  # Размер подписи
-                           labelcolor='purple',  # Цвет подписи
-                           # bottom=True, # Рисуем метки снизу
-                           # top=True, # сверху
-                           # left=True, # слева
-                           # right=True, # и справа
-                           # labelbottom=True, # Рисуем подписи снизу
-                           # labeltop=True, # сверху
-                           # labelleft=True, # слева
-                           # labelright=True, # и справа
-                           labelrotation=90)  # Поворот подписей
-
-            # Добавляем линии основной сетки:
-            # self.ax.grid()
-
-            # Включаем видимость вспомогательных делений:
-            self.ax.minorticks_on()
-            self.ax.xaxis.set_minor_locator(ticker.NullLocator())
-            canvas = FigureCanvas(self.fig)
-            proxy_widget = QtWidgets.QGraphicsProxyWidget()
-            proxy_widget.setWidget(canvas)
-            self.scene.addItem(proxy_widget)
-            # plt.xlim([0, 25])
-            #1.26 1.26
-            self.View.resize(int(fsize), int(ssize))
-            self.fig.tight_layout()
-            # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
-        else:
-            self.scene = QtWidgets.QGraphicsScene()
-            self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-            self.fig, self.ax = plt.subplots()
-            canvas = FigureCanvas(self.fig)
-            proxy_widget = QtWidgets.QGraphicsProxyWidget()
-            proxy_widget.setWidget(canvas)
-            self.scene.addItem(proxy_widget)
-            self.fig.tight_layout()
-        self.View.show()
-        #self.plotResize()
+        self.endPlot()
 
     def show_func_pie(self):
-        self.View.deleteLater()
-        self.plot_type = 4
-        self.scene = QtWidgets.QGraphicsScene()
-        self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-        date3 = self.datePicker1.date().toPyDate()
-        date4 = self.datePicker2.date().toPyDate() + timedelta(days=1)
-        dates = self.date(date3, date4)
-
-        x = self.radio_buttons(dates)
-        print(x)
-
-        y = []
-        y1 = []
+        x, y = self.startPlot(4)
 
         for i in range(len(x) - 1):
-            date1 = x[i]
-            date2 = x[i + 1]
-            select = "select sum(earning) from invoices where date >= '" + date1 + "' and date < '" + date2 + "'"
+            select = "select sum(earning) from invoices where date >= '" + x[i] + "' and date < '" + x[i + 1] + "'"
             result = dbutil.select(select)
-            y1.append(result[0][0])
-            if not y1[i]:
-                y1[i] = 0
+            y.append(result[0][0])
 
-        # x = x[:-1]
-        # select = "select goods, earning, date from invoices where date between '" + date1 + "' and '" + date2 + "'"
-        # result = dbutil.select(select)
-        # goods = [a[0] for a in result]
-        # earnings = [a[1] for a in result]
-        # date = [a[2] for a in result]
+            if not y[i]:
+                y[i] = 0
 
-        # for i in dates:
-        # if i in date:
-        # y.append(goods[date.index(i)])
-        # y1.append(earnings[date.index(i)])
-        # else:
-        # y.append(0)
-        # y1.append(0)
+        self.instantResize()
 
-        # y = goods
-        # y1 = earnings
+        if sum(y) < 1:
+            return True
 
-        # plt.plot(np.arange(0,5, 0.2))
-        width = self.width()
-        height = self.height()
-
-        fcoef = width / 960
-        scoef = height / 620
-
-        fsize = fcoef * 760
-        ssize = scoef * 500
-
-        self.fig, self.ax = plt.subplots()
-
-        self.fig.set_figwidth(fsize / self.fig.dpi)
-        self.fig.set_figheight(ssize / self.fig.dpi)
-
-        # self.ax.set_xticks(dates)
-        # self.fig.gca()
-        # plt.plot_date(x, y)
-
-        # plt.subplot(1,3,1)
-
-        # plt.plot_date(x,y1)
-        # plt.subplot(1,3,2)
-        # self.ax.pie(y1, labels = x)
-        self.ax.pie(y1)
+        self.ax.pie(y)
         self.ax.legend(x, loc='center left', bbox_to_anchor=(0.4, 0.5))
-        # self.ax.grid()
-        # plt.fill(dates, y)
-        # self.ax.grid()
-        # Устанавливаем интервал основных и
-        # вспомогательных делений:
-        # self.ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
-        # self.ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-        # self.ax.yaxis.set_major_locator(ticker.MultipleLocator(base=20))
-        # self.ax.yaxis.set_minor_locator(ticker.MultipleLocator(50))
 
-        # Настраиваем вид основных тиков:
-        self.ax.tick_params(axis='both',  # Применяем параметры к обеим осям
-                       which='major',  # Применяем параметры к основным делениям
-                       direction='inout',  # Рисуем деления внутри и снаружи графика
-                       length=10,  # Длинна делений
-                       width=2,  # Ширина делений
-                       color='m',  # Цвет делений
-                       pad=10,  # Расстояние между черточкой и ее подписью
-                       labelsize=10,  # Размер подписи
-                       labelcolor='purple',  # Цвет подписи
-                       # bottom=True, # Рисуем метки снизу
-                       # top=True, # сверху
-                       # left=True, # слева
-                       # right=True, # и справа
-                       # labelbottom=True, # Рисуем подписи снизу
-                       # labeltop=True, # сверху
-                       # labelleft=True, # слева
-                       # labelright=True, # и справа
-                       labelrotation=90)  # Поворот подписей
+        self.endPlot()
 
-        # Добавляем линии основной сетки:
-        # self.ax.grid()
+    def endPlot(self):
+        self.ax.grid(c='#ededed')
 
-        # Включаем видимость вспомогательных делений:
+        self.ax.tick_params(axis='x', which='major', direction='inout', length=5, width=1, color='black', pad=5,
+                            labelsize=9, labelcolor='black', labelrotation=80)
+
+        self.ax.tick_params(axis='y', which='major', direction='inout', length=5, width=1, color='black', pad=5,
+                            labelsize=10, labelcolor='black', labelrotation=0)
+
         self.ax.minorticks_on()
         self.ax.xaxis.set_minor_locator(ticker.NullLocator())
 
-        # self.ax.grid(which='major', lw =1,
-        #
-        # linestyle='-')
-        #
-        # self.ax.grid(which='minor', lw = 1,
-        #
-        # linestyle='-')
-        #
-
-        # QWebEngineView()
-
-        # self.fig.set_figwidth(12)
-        # self.fig.set_figheight(8)
-        # self.ax.grid()
         canvas = FigureCanvas(self.fig)
         proxy_widget = QtWidgets.QGraphicsProxyWidget()
         proxy_widget.setWidget(canvas)
         self.scene.addItem(proxy_widget)
-        # plt.xlim([0, 25])
-        self.View.resize(int(fsize), int(ssize))
+        self.View.resize(int(self.width() / 960 * 760), int(self.height() / 620 * 500))
         self.fig.tight_layout()
-        # self.fig.subplots_adjust(0.1, 0.4, 0.4, 0.8)
         self.View.show()
-        #self.plotResize()
 
     def resizeEvent(self, event):
-        #self.plotResize()
-        print("gav")
+        self.plotResize()
 
     def plotResize(self):
-        if self.plot_type == 1:
-            self.show_func_goods()
-        elif self.plot_type == 2:
-            self.show_func_earnings()
-        elif self.plot_type == 3:
-            self.show_func_bar()
-        elif self.plot_type == 4:
-            self.show_func_pie()
-        #self.View.resetTransform()
-        #width = self.width()
-        #height = self.height()
+        width_dif = self.current_width - self.size().width()
+        height_dif = self.current_height - self.size().height()
 
-        #fcoef = width / 960
-        #scoef = height / 620
+        if abs(width_dif) + abs(height_dif) > 200:
+            if self.plot_type == 1:
+                self.show_func_goods()
+            elif self.plot_type == 2:
+                self.show_func_earnings()
+            elif self.plot_type == 3:
+                self.show_func_bar()
+            elif self.plot_type == 4:
+                self.show_func_pie()
 
-        #fsize = fcoef * 760
-        #ssize = scoef * 500
+            self.current_width -= width_dif
+            self.current_height -= height_dif
 
-        #self.scene = QtWidgets.QGraphicsScene()
-        #self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
-        #self.View.resize(int(width / 1.25), int(height / 1.25))
-        #scene = QtWidgets.QGraphicsScene(height, height, width, height)
-        #tr = QtGui.QTransform()
-        #tr.scale(fcoef, scoef)
-        #self.scene = scene
-        #self.fig.tight_layout()
-        #self.scene = QtWidgets.QGraphicsScene()
-
-        #a, b = self.fig.get_size_inches()*self.fig.dpi
-        #self.fig.set_figwidth(fsize / self.fig.dpi)
-        #self.fig.set_figheight(ssize / self.fig.dpi)
-
-        #canvas = FigureCanvas(self.fig)
-        #proxy_widget = QtWidgets.QGraphicsProxyWidget()
-        #proxy_widget.setWidget(canvas)
-        #self.scene.addItem(proxy_widget)
-        #self.View.show()
+    def instantResize(self):
+        self.fig.set_figwidth(self.width() / 960 * 760 / self.fig.dpi)
+        self.fig.set_figheight(self.height() / 620 * 500 / self.fig.dpi)
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)
@@ -1084,8 +638,6 @@ widget.addWidget(invoice)
 widget.addWidget(plots)
 widget.addWidget(reports)
 
-# widget.setFixedWidth(960)
-# widget.setFixedHeight(560)
 widget.resize(960, 620)
 widget.show()
 
