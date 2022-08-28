@@ -406,10 +406,10 @@ class Plots(QDialog):
             if not y[i]:
                 y[i] = 0
 
-        xDates = []
+        xDates = [x[0] + " - " + self.toString(self.toDate(x[1]) - relativedelta(days=1))]
         xYears = [x[0][:4]]
         xYearsCount = [0]
-        xtickstop = []
+        xtickstop = [xDates[-1][5:10] + ' - ' + xDates[-1][18:]]
 
         if self.radio_Years.isChecked():
             for i in range(1, len(x)):
@@ -418,8 +418,19 @@ class Plots(QDialog):
                     xYearsCount.append(i)
 
             x = xYears
-        else:
+        elif self.radio_Months.isChecked():
+            for i in range(1, len(x)):
+                if x[i][:4] not in xYears:
+                    xYears.append(x[i][:4])
+                    xYearsCount.append(i)
+
+            xtickstop = []
             for i in range(len(x) - 1):
+                xtickstop.append(self.toDate(x[i]).strftime("%B"))
+
+            x = x[:-1]
+        else:
+            for i in range(1, len(x) - 1):
                 xDates.append(x[i] + " - " + self.toString(self.toDate(x[i + 1]) - relativedelta(days=1)))
 
                 xtickstop.append(xDates[-1][5:10] + ' - ' + xDates[-1][18:])
