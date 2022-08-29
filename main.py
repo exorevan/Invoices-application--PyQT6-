@@ -5,8 +5,9 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt6.QtCore import Qt
 from PyQt6 import QtWidgets
+from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QFont, QColor, QIcon, QPixmap, QImage
 from PyQt6.QtWidgets import *
 from PyQt6.uic import loadUi
 from dateutil import relativedelta
@@ -84,6 +85,10 @@ class Invoice(QDialog):
 
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
         self.tableWidget.setColumnHidden(0, 1)
+        self.tableWidget.selectionModel().selectionChanged.connect(self.disableSelection)
+
+        self.messageBox = QMessageBox(self)
+        self.messageBox.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
 
     def goBackToInvoices(self):
         invoices.showInvocies()
@@ -166,20 +171,41 @@ class Invoice(QDialog):
         notNullRows = 0
 
         for i in range(self.tableWidget.rowCount()):
-            if self.upgradedCheck(self.tableWidget.item(i, 1), self.tableWidget.item(i, 2), self.tableWidget.item(i, 3),
-                                  self.tableWidget.item(i, 4)):
-                count = int(self.tableWidget.item(i, 3).text())
-                price = float(self.tableWidget.item(i, 4).text())
+            width = self.tableWidget.item(i, 1)
+            height = self.tableWidget.item(i, 2)
+            count = self.tableWidget.item(i, 3)
+            price = self.tableWidget.item(i, 4)
+
+            if self.upgradedCheck(width, height, count, price):
+                for j in range(self.tableWidget.columnCount()):
+                    self.tableWidget.item(i, j).setBackground(QColor(255, 255, 255))
+
+                count = int(count.text())
+                price = float(price.text())
 
                 self.tableWidget.setItem(i, 5, QTableWidgetItem(str(count * price)))
 
                 sum += count * price
                 goods += count
                 notNullRows += 1
+            else:
+                for j in range(self.tableWidget.columnCount()):
+                    self.tableWidget.item(i, j).setBackground(QColor(255, 92, 92))
 
-        self.uniqueGoods.setText(str(notNullRows) + " positions")
-        self.goods.setText(str(goods))
-        self.sum.setText(str(sum))
+                self.messageBox.setFont(QFont('Dubai Light', 13))
+
+                self.messageOnCond(0, "Error, you must fill ", " in the row ", ' in the row ', width, height, count,
+                                   price, str(i + 1))
+
+                self.messageBox.exec()
+
+            self.uniqueGoods.setText(str(notNullRows) + " positions")
+            self.goods.setText(str(goods))
+            self.sum.setText(str(sum))
+
+    def disableSelection(self, selected):
+        for i in selected.indexes():
+            self.tableWidget.item(i.row(), i.column()).setSelected(False)
 
     def numberCheck(self, number):
         try:
@@ -189,12 +215,44 @@ class Invoice(QDialog):
             return False
 
     def upgradedCheck(self, width, height, count, price):
-        if not (width is None or height is None or count is None or price is None):
-            if self.numberCheck(width.text()) and self.numberCheck(
-                    height.text()) and count.text().isdigit() and self.numberCheck(price.text()):
+
+        widthCon, heightCon, countCon, priceCon = self.firstSubCheck(width, height, count, price)
+
+        if widthCon and heightCon and countCon and priceCon:
+            widthCon, heightCon, countCon, priceCon = self.secondSubCheck(width, height, count, price)
+
+            if widthCon and heightCon and countCon and priceCon:
                 return True
 
         return False
+
+    def firstSubCheck(self, width, height, count, price):
+        return width is not None, height is not None, count is not None, price is not None
+
+    def secondSubCheck(self, width, height, count, price):
+        return self.numberCheck(width.text()), self.numberCheck(height.text()), count.text().isdigit(), \
+               self.numberCheck(price.text())
+
+    def messageOnCond(self, check, messageStart, messageEnd, messageEndAlt, width, height, count, price, row):
+        if not check:
+            widthCon, heightCon, countCon, priceCon = self.firstSubCheck(width, height, count, price)
+
+            if widthCon and heightCon and countCon and priceCon:
+                self.messageOnCond(1, "Error, ", " must be a float number (1.1, 3, 5.99...) in the row ",
+                                   " must be an integer number (1, 2, 3..) in the row ", width, height, count, price,
+                                   row)
+                return True
+        else:
+            widthCon, heightCon, countCon, priceCon = self.secondSubCheck(width, height, count, price)
+
+        if not widthCon:
+            self.messageBox.setText(messageStart + "width" + messageEnd + row)
+        elif not heightCon:
+            self.messageBox.setText(messageStart + "height" + messageEnd + row)
+        elif not countCon:
+            self.messageBox.setText(messageStart + "count" + messageEndAlt + row)
+        elif not priceCon:
+            self.messageBox.setText(messageStart + "price" + messageEnd + row)
 
     def save(self):
         if self.textbox.toPlainText() != "" and self.goods.text() != '' and self.uniqueGoods.text() != '' and self.sum.text() != '':
@@ -656,6 +714,7 @@ widget.addWidget(plots)
 widget.addWidget(reports)
 
 widget.resize(960, 620)
+#widget.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
 widget.show()
 
 sys.exit(app.exec())
