@@ -5,6 +5,7 @@ from math import ceil
 
 import matplotlib.pyplot as plt
 import numpy as np
+from PyQt6.QtCore import Qt
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import *
 from PyQt6.uic import loadUi
@@ -273,7 +274,7 @@ class Plots(QDialog):
     def __init__(self):
         super(Plots, self).__init__()
         loadUi("uis/plots/Plots.ui", self)
-
+        self.timer_id = 0
         self.radio_Auto.toggle()
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.showPlotButton.clicked.connect(self.show_func_pie)
@@ -285,7 +286,10 @@ class Plots(QDialog):
         self.datePicker1.setDate(date.today() - timedelta(days=30))
         self.datePicker2.setDate(date.today())
 
-        self.startPlot(0)
+        self.scroll = QScrollArea()
+
+        self.fig, self.ax = plt.subplots()
+        _, _ = self.startPlot(0)
 
     def datesBetween(self, sdate, edate):
         dates = []
@@ -375,16 +379,18 @@ class Plots(QDialog):
         if index:
             self.View.deleteLater()
 
+        self.fig, self.ax = plt.subplots()
+
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
+
+        self.View.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.View.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         date1 = self.datePicker1.date().toPyDate()
         date2 = self.datePicker2.date().toPyDate() + timedelta(days=1)
 
-        self.fig, self.ax = plt.subplots()
-
-        if index:
-            return self.radio_buttons(self.datesBetween(date1, date2)), []
+        return self.radio_buttons(self.datesBetween(date1, date2)), []
 
     def show_func_goods(self):
         x, y = self.startPlot(1)
@@ -398,7 +404,8 @@ class Plots(QDialog):
 
     def show_func_plot(self, x, y, subject):
         for i in range(len(x) - 1):
-            select = "select sum(" + subject + ") from invoices where date >= '" + x[i] + "' and date < '" + x[i + 1] + "'"
+            select = "select sum(" + subject + ") from invoices where date >= '" + x[i] + "' and date < '" + x[
+                i + 1] + "'"
             result = dbutil.select(select)
 
             y.append(result[0][0])
@@ -460,8 +467,9 @@ class Plots(QDialog):
 
             self.ax_t.tick_params(axis='x', direction='inout')
 
-            self.ax_t.tick_params(axis='both', which='major', direction='inout', length=10, width=1, color='black', pad=10,
-                             labelsize=10, labelcolor='black', labelrotation=45)
+            self.ax_t.tick_params(axis='both', which='major', direction='inout', length=10, width=1, color='black',
+                                  pad=10,
+                                  labelsize=10, labelcolor='black', labelrotation=45)
 
         self.endPlot()
 
@@ -538,30 +546,41 @@ class Plots(QDialog):
         self.View.resize(int(self.width() / 960 * 760), int(self.height() / 620 * 500))
         self.fig.tight_layout()
         self.View.show()
+        plt.close(self.fig)
 
     def resizeEvent(self, event):
+        self.killTimer(self.timer_id)
+
+        width_dif = self.size().width() / self.current_width
+        height_dif = self.size().height() / self.current_height
+
+        if width_dif + height_dif != 2:
+            self.View.resize(int(self.width() / 960 * 760), int(self.height() / 620 * 480))
+            self.View.scale(1 + 1 * (width_dif - 1), 1 + 1 * (height_dif - 1))
+
+            self.current_width *= width_dif
+            self.current_height *= height_dif
+
+            self.timer_id = self.startTimer(300)
+
+    def timerEvent(self, event):
         self.plotResize()
+        print("resize")
+        self.killTimer(self.timer_id)
 
     def plotResize(self):
-        width_dif = self.current_width - self.size().width()
-        height_dif = self.current_height - self.size().height()
-
-        if abs(width_dif) + abs(height_dif) > 200:
-            if self.plot_type == 1:
-                self.show_func_goods()
-            elif self.plot_type == 2:
-                self.show_func_earnings()
-            elif self.plot_type == 3:
-                self.show_func_bar()
-            elif self.plot_type == 4:
-                self.show_func_pie()
-
-            self.current_width -= width_dif
-            self.current_height -= height_dif
+        if self.plot_type == 1:
+            self.show_func_goods()
+        elif self.plot_type == 2:
+            self.show_func_earnings()
+        elif self.plot_type == 3:
+            self.show_func_bar()
+        elif self.plot_type == 4:
+            self.show_func_pie()
 
     def instantResize(self):
         self.fig.set_figwidth(self.width() / 960 * 760 / self.fig.dpi)
-        self.fig.set_figheight(self.height() / 620 * 500 / self.fig.dpi)
+        self.fig.set_figheight(self.height() / 620 * 480 / self.fig.dpi)
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)

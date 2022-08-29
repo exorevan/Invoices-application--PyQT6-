@@ -372,7 +372,7 @@ QPushButton:hover {
                </property>
                <property name="icon">
                 <iconset>
-                 <normaloff>Без имени-1.png</normaloff>Без имени-1.png</iconset>
+                 <normaloff>plots.png</normaloff>plots.png</iconset>
                </property>
                <property name="iconSize">
                 <size>
@@ -424,7 +424,7 @@ QPushButton:hover {
                <property name="font">
                 <font>
                  <family>Dubai Light</family>
-                 <pointsize>17</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="accessibleDescription">
@@ -471,7 +471,7 @@ QDateEdit:hover {
                <property name="font">
                 <font>
                  <family>Dubai Light</family>
-                 <pointsize>18</pointsize>
+                 <pointsize>16</pointsize>
                 </font>
                </property>
                <property name="layoutDirection">
