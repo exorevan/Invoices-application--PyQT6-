@@ -20,8 +20,8 @@
    <string>Invoices</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: white;
-border-radius: 20;</string>
+   <string notr="true">background: rgb(255, 255, 255);
+background-position: center;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
@@ -80,7 +80,7 @@ border-radius: 20;</string>
               <number>0</number>
              </property>
              <property name="leftMargin">
-              <number>10</number>
+              <number>20</number>
              </property>
              <property name="topMargin">
               <number>20</number>
@@ -89,7 +89,7 @@ border-radius: 20;</string>
               <number>5</number>
              </property>
              <property name="bottomMargin">
-              <number>0</number>
+              <number>20</number>
              </property>
              <item>
               <widget class="QTableWidget" name="tableWidget">
@@ -106,15 +106,21 @@ color: black;
 border: 2px solid white;</string>
                </property>
                <attribute name="horizontalHeaderVisible">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <attribute name="horizontalHeaderCascadingSectionResizes">
-                <bool>false</bool>
+                <bool>true</bool>
                </attribute>
                <attribute name="horizontalHeaderDefaultSectionSize">
                 <number>102</number>
                </attribute>
                <attribute name="horizontalHeaderHighlightSections">
+                <bool>false</bool>
+               </attribute>
+               <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+                <bool>true</bool>
+               </attribute>
+               <attribute name="horizontalHeaderStretchLastSection">
                 <bool>true</bool>
                </attribute>
                <attribute name="verticalHeaderVisible">
@@ -415,16 +421,22 @@ QPushButton:hover {
              </property>
              <item>
               <widget class="QDateEdit" name="datePicker1">
+               <property name="minimumSize">
+                <size>
+                 <width>130</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>171</width>
+                 <width>200</width>
                  <height>31</height>
                 </size>
                </property>
                <property name="font">
                 <font>
                  <family>Dubai Light</family>
-                 <pointsize>16</pointsize>
+                 <pointsize>15</pointsize>
                 </font>
                </property>
                <property name="accessibleDescription">
@@ -462,16 +474,22 @@ QDateEdit:hover {
              </item>
              <item>
               <widget class="QDateEdit" name="datePicker2">
+               <property name="minimumSize">
+                <size>
+                 <width>130</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>171</width>
+                 <width>200</width>
                  <height>31</height>
                 </size>
                </property>
                <property name="font">
                 <font>
                  <family>Dubai Light</family>
-                 <pointsize>16</pointsize>
+                 <pointsize>15</pointsize>
                 </font>
                </property>
                <property name="layoutDirection">
@@ -634,6 +652,8 @@ QPushButton:hover {
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="bckg.qrc"/>
+ </resources>
  <connections/>
 </ui>

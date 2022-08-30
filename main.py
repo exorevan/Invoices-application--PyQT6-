@@ -29,6 +29,7 @@ class Invoices(QDialog):
 
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
         self.tableWidget.setColumnHidden(0, 1)
+        self.tableWidget.setSortingEnabled(True)
 
         second_date = date.today()
         first_date = date.today() - timedelta(days=30)
@@ -84,8 +85,9 @@ class Invoice(QDialog):
         self.deleteButton.clicked.connect(self.delete)
 
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
-        self.tableWidget.setColumnHidden(0, 1)
         self.tableWidget.selectionModel().selectionChanged.connect(self.disableSelection)
+        self.tableWidget.setColumnHidden(0, 1)
+        self.tableWidget.setSortingEnabled(True)
 
         self.messageBox = QMessageBox(self)
         self.messageBox.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
@@ -177,7 +179,7 @@ class Invoice(QDialog):
             price = self.tableWidget.item(i, 4)
 
             if self.upgradedCheck(width, height, count, price):
-                for j in range(self.tableWidget.columnCount()):
+                for j in range(1, self.tableWidget.columnCount() - 1):
                     self.tableWidget.item(i, j).setBackground(QColor(255, 255, 255))
 
                 count = int(count.text())
@@ -189,7 +191,7 @@ class Invoice(QDialog):
                 goods += count
                 notNullRows += 1
             else:
-                for j in range(self.tableWidget.columnCount()):
+                for j in range(1, self.tableWidget.columnCount() - 1):
                     self.tableWidget.item(i, j).setBackground(QColor(255, 92, 92))
 
                 self.messageBox.setFont(QFont('Dubai Light', 13))
@@ -205,7 +207,8 @@ class Invoice(QDialog):
 
     def disableSelection(self, selected):
         for i in selected.indexes():
-            self.tableWidget.item(i.row(), i.column()).setSelected(False)
+            if self.tableWidget.item(i.row(), i.column()):
+                self.tableWidget.item(i.row(), i.column()).setSelected(False)
 
     def numberCheck(self, number):
         try:
@@ -408,22 +411,23 @@ class Plots(QDialog):
             return mas
 
         elif self.radio_Months.isChecked():
-            delta = relativedelta(self.toDate(x[-1]), self.toDate(x[0]))
-            months = int(delta.years * 12 + delta.months)
             mas = [x[0]]
 
             firstDate = self.toDate(x[0]) + relativedelta(months=1)
             firstDateNewMonth = self.toString(firstDate)[:7] + '-01'
 
-            mas.append(firstDateNewMonth)
+            currentDate = self.toDate(firstDateNewMonth)
 
-            currentDate = self.toDate(firstDateNewMonth) + relativedelta(months=1)
-            for i in range(months - 1):
+            while True:
+                if currentDate > (self.toDate(x[-1]) - relativedelta(days=1)):
+                    break
+
                 mas.append(self.toString(currentDate))
                 currentDate += relativedelta(months=1)
 
             mas.append(x[-1])
 
+            print(mas)
             return mas
         elif self.radio_Weeks.isChecked():
             firstMonday = self.toDate(x[0]) + timedelta(days=-self.toDate(x[0]).weekday(), weeks=1)
@@ -568,6 +572,14 @@ class Plots(QDialog):
 
         if len(mul) == 0:
             plt.close(self.fig)
+
+            self.messageBox.setFont(QFont('Dubai Light', 13))
+            self.messageBox.setText(f"There's no goods in this period ({self.datePicker1.date().toPyDate()} - {self.datePicker2.date().toPyDate()})")
+            self.messageBox.exec()
+
+            self.isBlocked = True
+
+            return True
             return 0
 
         mul.sort()
@@ -608,6 +620,12 @@ class Plots(QDialog):
         self.instantResize()
 
         if sum(y) < 1:
+            self.messageBox.setFont(QFont('Dubai Light', 13))
+            self.messageBox.setText(f"There's no goods in this period ({self.datePicker1.date().toPyDate()} - {self.datePicker2.date().toPyDate()})")
+            self.messageBox.exec()
+
+            self.isBlocked = True
+
             return True
 
         if len(x) > 15:
@@ -680,7 +698,6 @@ class Plots(QDialog):
 
             xtickstop = xDatesc
 
-        print(xtickstop)
         self.ax.legend(xtickstop, loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
 
         self.endPlot()
@@ -701,7 +718,12 @@ class Plots(QDialog):
         proxy_widget = QtWidgets.QGraphicsProxyWidget()
         proxy_widget.setWidget(canvas)
         self.scene.addItem(proxy_widget)
-        self.View.resize(int(self.width() / 960 * 760), int(self.height() / 620 * 500))
+
+        if self.plot_type != 4:
+            self.View.resize(int(self.width() / 960 * 750), int(self.height() / 620 * 600))
+        else:
+            self.View.resize(int(self.width() / 960 * 650), int(self.height() / 620 * 600))
+
         self.fig.tight_layout()
         self.View.show()
         plt.close(self.fig)
@@ -738,8 +760,12 @@ class Plots(QDialog):
                 self.show_func_pie()
 
     def instantResize(self):
-        self.fig.set_figwidth(self.width() / 960 * 760 / self.fig.dpi)
-        self.fig.set_figheight(self.height() / 620 * 480 / self.fig.dpi)
+        if self.plot_type != 4:
+            self.fig.set_figwidth(self.width() / 960 * 750 / self.fig.dpi)
+        else:
+            self.fig.set_figwidth(self.width() / 960 * 650 / self.fig.dpi)
+
+        self.fig.set_figheight(self.height() / 620 * 600 / self.fig.dpi)
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)
@@ -753,6 +779,7 @@ class Reports(QDialog):
         self.showReportsButton.clicked.connect(self.showReports)
 
         self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.tableWidget.setSortingEnabled(True)
 
         second_date = date.today()
         first_date = date.today() - timedelta(days=30)
@@ -814,7 +841,7 @@ widget.addWidget(plots)
 widget.addWidget(reports)
 
 widget.resize(960, 620)
-# widget.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
+widget.setWindowIcon(QIcon('melusi.png'))
 widget.show()
 
 sys.exit(app.exec())
