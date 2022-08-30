@@ -6,8 +6,8 @@ from math import ceil
 import matplotlib.pyplot as plt
 import numpy as np
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QFont, QColor, QIcon, QPixmap, QImage
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QColor, QIcon
 from PyQt6.QtWidgets import *
 from PyQt6.uic import loadUi
 from dateutil import relativedelta
@@ -326,13 +326,16 @@ class Invoice(QDialog):
 
 class Plots(QDialog):
     plot_type = 0
-    current_width = 960
-    current_height = 620
+    isBlocked = True
 
     def __init__(self):
         super(Plots, self).__init__()
         loadUi("uis/plots/Plots.ui", self)
+
         self.timer_id = 0
+        self.current_width = self.size().width()
+        self.current_height = self.size().height()
+
         self.radio_Auto.toggle()
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.showPlotButton.clicked.connect(self.show_func_pie)
@@ -343,6 +346,9 @@ class Plots(QDialog):
 
         self.datePicker1.setDate(date.today() - timedelta(days=30))
         self.datePicker2.setDate(date.today())
+
+        self.messageBox = QMessageBox(self)
+        self.messageBox.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
 
         self.scroll = QScrollArea()
 
@@ -419,8 +425,6 @@ class Plots(QDialog):
             mas.append(x[-1])
 
             return mas
-
-
         elif self.radio_Weeks.isChecked():
             firstMonday = self.toDate(x[0]) + timedelta(days=-self.toDate(x[0]).weekday(), weeks=1)
             firstMonday = self.toString(firstMonday)
@@ -448,6 +452,9 @@ class Plots(QDialog):
         date1 = self.datePicker1.date().toPyDate()
         date2 = self.datePicker2.date().toPyDate() + timedelta(days=1)
 
+        if date1 >= date2:
+            return [], []
+
         return self.radio_buttons(self.datesBetween(date1, date2)), []
 
     def show_func_goods(self):
@@ -470,6 +477,10 @@ class Plots(QDialog):
 
             if not y[i]:
                 y[i] = 0
+
+        if len(x) == 0:
+            plt.close(self.fig)
+            return 0
 
         xDates = [x[0] + " - " + self.toString(self.toDate(x[1]) - relativedelta(days=1))]
         xYears = [x[0][:4]]
@@ -510,6 +521,17 @@ class Plots(QDialog):
 
             x = xDates
 
+        if len(x) > 50:
+            self.messageBox.setFont(QFont('Dubai Light', 13))
+            self.messageBox.setText("Too many dates input")
+            self.messageBox.exec()
+
+            self.isBlocked = True
+
+            return True
+
+        self.isBlocked = False
+
         self.instantResize()
 
         self.ax.plot(x, y, 'o', color='black', markersize=3)
@@ -544,6 +566,10 @@ class Plots(QDialog):
         for i in result:
             mul.append([i[0] * i[1], i[2]])
 
+        if len(mul) == 0:
+            plt.close(self.fig)
+            return 0
+
         mul.sort()
 
         if len(mul) < 1:
@@ -567,6 +593,10 @@ class Plots(QDialog):
     def show_func_pie(self):
         x, y = self.startPlot(4)
 
+        if len(x) == 0:
+            plt.close(self.fig)
+            return 0
+
         for i in range(len(x) - 1):
             select = "select sum(earning) from invoices where date >= '" + x[i] + "' and date < '" + x[i + 1] + "'"
             result = dbutil.select(select)
@@ -580,8 +610,78 @@ class Plots(QDialog):
         if sum(y) < 1:
             return True
 
+        if len(x) > 15:
+            self.messageBox.setFont(QFont('Dubai Light', 13))
+            self.messageBox.setText("Too many dates input")
+            self.messageBox.exec()
+
+            self.isBlocked = True
+
+            return True
+
+        self.isBlocked = False
+
         self.ax.pie(y)
-        self.ax.legend(x, loc='center left', bbox_to_anchor=(0.4, 0.5))
+
+        xYearsCount = [0]
+        xYears = [x[0][:4]]
+        xtickstop = []
+        xDates = [x[0] + " - " + self.toString(self.toDate(x[1]) - relativedelta(days=1))]
+
+        if self.radio_Months.isChecked():
+            for i in range(1, len(x)):
+                if x[i][:4] not in xYears:
+                    xYears.append(x[i][:4])
+                    xYearsCount.append(i)
+
+            xtickstop = []
+            for i in range(len(x) - 1):
+                xtickstop.append(self.toDate(x[i]).strftime("%B"))
+
+            if self.toDate(x[-2]).strftime("%B") != self.toDate(x[-1]).strftime("%B"):
+                xtickstop.append(self.toDate(x[-1]).strftime("%B"))
+
+            for i in range(len(xYearsCount)):
+                xtickstop[xYearsCount[i]] = str(xYears[i] + ': ' + xtickstop[xYearsCount[i]])
+        elif self.radio_Years.isChecked():
+            for i in range(1, len(x)):
+                if x[i][:4] not in xYears:
+                    xYears.append(x[i][:4])
+                    xYearsCount.append(i)
+            xtickstop = xYears
+        else:
+            for i in range(1, len(x) - 1):
+                xDates.append(x[i] + " - " + self.toString(self.toDate(x[i + 1]) - relativedelta(days=1)))
+
+                xtickstop.append(xDates[-1][5:10] + ' - ' + xDates[-1][18:])
+
+                if xDates[i][13:17] not in xYears:
+                    xYears.append(xDates[i][13:17])
+                    xYearsCount.append(i)
+
+            if xDates[-1][13:17] not in xYears:
+                xYears.append(xDates[-1][13:17])
+                xYearsCount.append(len(x))
+
+            xDatesc = []
+            for i in xDates:
+                xDatesc.append(i[5:10] + ' - ' + i[18:23])
+
+            xDatesc[0] = xDates[0][:4] + ': ' + xDatesc[0]
+
+            for i in range(1, len(xYearsCount) - 1):
+                xDatesc[xYearsCount[i] + 1] = str(xYears[i] + ': ' + xDatesc[xYearsCount[i] + 1])
+
+            if len(xDatesc) > 1:
+                if xYearsCount[-1] == len(xDatesc) - 1:
+                    xDatesc[xYearsCount[-1]] = str(xYears[-1] + ': ' + xDatesc[xYearsCount[-1]])
+                else:
+                    xDatesc[xYearsCount[-1] + 1] = str(xYears[-1] + ': ' + xDatesc[xYearsCount[-1] + 1])
+
+            xtickstop = xDatesc
+
+        print(xtickstop)
+        self.ax.legend(xtickstop, loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
 
         self.endPlot()
 
@@ -627,14 +727,15 @@ class Plots(QDialog):
         self.killTimer(self.timer_id)
 
     def plotResize(self):
-        if self.plot_type == 1:
-            self.show_func_goods()
-        elif self.plot_type == 2:
-            self.show_func_earnings()
-        elif self.plot_type == 3:
-            self.show_func_bar()
-        elif self.plot_type == 4:
-            self.show_func_pie()
+        if not self.isBlocked:
+            if self.plot_type == 1:
+                self.show_func_goods()
+            elif self.plot_type == 2:
+                self.show_func_earnings()
+            elif self.plot_type == 3:
+                self.show_func_bar()
+            elif self.plot_type == 4:
+                self.show_func_pie()
 
     def instantResize(self):
         self.fig.set_figwidth(self.width() / 960 * 760 / self.fig.dpi)
@@ -642,7 +743,6 @@ class Plots(QDialog):
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)
-        self.plot_type = 0
 
 
 class Reports(QDialog):
@@ -714,7 +814,7 @@ widget.addWidget(plots)
 widget.addWidget(reports)
 
 widget.resize(960, 620)
-#widget.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
+# widget.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
 widget.show()
 
 sys.exit(app.exec())
