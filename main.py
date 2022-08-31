@@ -446,6 +446,9 @@ class Plots(QDialog):
 
             firstMonday = self.toDate(x[0]) + timedelta(days=-self.toDate(x[0]).weekday(), weeks=1)
 
+            if firstMonday > self.toDate(x[-1]):
+                return [x[0], self.toString(self.toDate(x[-1]))]
+
             firstMonday = self.toString(firstMonday)
 
             xDates = [x[0]]
