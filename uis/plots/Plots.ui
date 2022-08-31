@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>960</width>
-    <height>620</height>
+    <height>640</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -223,25 +223,20 @@ QPushButton:hover {
                      <enum>QFrame::Raised</enum>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_14">
-                     <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
-                      <widget class="QLabel" name="label">
-                       <property name="minimumSize">
-                        <size>
-                         <width>50</width>
-                         <height>50</height>
-                        </size>
-                       </property>
-                       <property name="font">
-                        <font>
-                         <family>Colonna MT</family>
-                         <pointsize>80</pointsize>
-                        </font>
-                       </property>
-                       <property name="styleSheet">
-                        <string notr="true">color: black; </string>
-                       </property>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_5">
                        <property name="text">
-                        <string>A</string>
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset>
+                         <normaloff>melusi.png</normaloff>melusi.png</iconset>
+                       </property>
+                       <property name="iconSize">
+                        <size>
+                         <width>120</width>
+                         <height>120</height>
+                        </size>
                        </property>
                       </widget>
                      </item>

@@ -558,26 +558,27 @@ border: 2px solid white;</string>
           </property>
          </widget>
         </widget>
-        <widget class="QLabel" name="label_8">
+        <widget class="QPushButton" name="pushButton">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>140</y>
-           <width>131</width>
-           <height>81</height>
+           <x>-10</x>
+           <y>110</y>
+           <width>191</width>
+           <height>171</height>
           </rect>
          </property>
-         <property name="font">
-          <font>
-           <family>Colonna MT</family>
-           <pointsize>90</pointsize>
-           <weight>75</weight>
-           <italic>false</italic>
-           <bold>true</bold>
-          </font>
-         </property>
          <property name="text">
-          <string>A</string>
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>melusi.png</normaloff>melusi.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>130</width>
+           <height>180</height>
+          </size>
          </property>
         </widget>
        </widget>
