@@ -241,7 +241,7 @@ QPushButton:hover {
                         <string notr="true">color: black; </string>
                        </property>
                        <property name="text">
-                        <string>D</string>
+                        <string>A</string>
                        </property>
                       </widget>
                      </item>
@@ -555,7 +555,7 @@ color: black;
                       </font>
                      </property>
                      <property name="text">
-                      <string>Week</string>
+                      <string>Years</string>
                      </property>
                     </widget>
                    </item>
@@ -568,7 +568,7 @@ color: black;
                       </font>
                      </property>
                      <property name="text">
-                      <string>Month</string>
+                      <string>Months</string>
                      </property>
                     </widget>
                    </item>
@@ -581,7 +581,7 @@ color: black;
                       </font>
                      </property>
                      <property name="text">
-                      <string>Week</string>
+                      <string>Weeks</string>
                      </property>
                     </widget>
                    </item>
@@ -1218,6 +1218,9 @@ color: black;</string>
           </property>
           <item>
            <layout class="QVBoxLayout" name="graphicView_lay">
+            <property name="rightMargin">
+             <number>20</number>
+            </property>
             <property name="bottomMargin">
              <number>0</number>
             </property>

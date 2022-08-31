@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>957</width>
+    <width>960</width>
     <height>620</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>960</width>
+    <height>620</height>
+   </size>
   </property>
   <property name="font">
    <font>
@@ -652,8 +658,6 @@ QPushButton:hover {
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="bckg.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

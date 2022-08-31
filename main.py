@@ -91,6 +91,7 @@ class Invoice(QDialog):
 
         self.messageBox = QMessageBox(self)
         self.messageBox.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
+        self.messageBox.setWindowTitle('Fill error')
 
     def goBackToInvoices(self):
         invoices.showInvocies()
@@ -352,6 +353,7 @@ class Plots(QDialog):
 
         self.messageBox = QMessageBox(self)
         self.messageBox.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
+        self.messageBox.setWindowTitle('Plot error')
 
         self.scroll = QScrollArea()
 
@@ -377,17 +379,24 @@ class Plots(QDialog):
     def radio_buttons(self, x):
         if self.radio_Auto.isChecked():
             if self.plot_type == 4:
+                mas = x
+
                 if (len(x) > 12):
                     d = ceil(len(x) / 12)
-                    x = x[::d]
+                    mas = x[::d]
 
-                return x
+                return mas
             else:
+                mas = x
+
                 if len(x) > 31:  # для двух
                     a = int(len(x) / 30)
-                    x = x[::a]
+                    mas = x[::a]
 
-                return x
+                    mas[-1] = mas[-1][13:] + x[-1][:]
+
+
+                return mas
 
         elif self.radio_Years.isChecked():
             date1 = self.toString(self.datePicker1.date().toPyDate())
@@ -430,7 +439,13 @@ class Plots(QDialog):
             print(mas)
             return mas
         elif self.radio_Weeks.isChecked():
+            if self.toDate(x[0]) + relativedelta(days=1) > self.toDate(x[-1]):
+                return []
+            elif self.toDate(x[0]) + relativedelta(days=1) == self.toDate(x[-1]):
+                return [x[0], self.toString(self.toDate(x[0]) + relativedelta(days=1))]
+
             firstMonday = self.toDate(x[0]) + timedelta(days=-self.toDate(x[0]).weekday(), weeks=1)
+
             firstMonday = self.toString(firstMonday)
 
             xDates = [x[0]]
@@ -525,7 +540,12 @@ class Plots(QDialog):
 
             x = xDates
 
-        if len(x) > 50:
+        if self.radio_Auto.isChecked():
+            border = 62
+        else:
+            border = 30
+
+        if len(x) > border:
             self.messageBox.setFont(QFont('Dubai Light', 13))
             self.messageBox.setText("Too many dates input")
             self.messageBox.exec()
@@ -552,8 +572,7 @@ class Plots(QDialog):
             self.ax_t.tick_params(axis='x', direction='inout')
 
             self.ax_t.tick_params(axis='both', which='major', direction='inout', length=10, width=1, color='black',
-                                  pad=10,
-                                  labelsize=10, labelcolor='black', labelrotation=45)
+                                  pad=10, labelsize=10, labelcolor='black', labelrotation=45)
 
         self.endPlot()
 
@@ -562,7 +581,7 @@ class Plots(QDialog):
 
         select = """select goods.width, goods.height, goods.total_price from goods inner join invoices on invoices.id 
                  = goods.invoice where date >= '""" + self.toString(self.datePicker1.date().toPyDate()) + \
-                 "' and date < '" + self.toString(self.datePicker2.date().toPyDate()) + "'"
+                 "' and date < '" + self.toString(self.datePicker2.date().toPyDate() + relativedelta(days=1)) + "'"
 
         result = dbutil.select(select)
 
@@ -580,7 +599,6 @@ class Plots(QDialog):
             self.isBlocked = True
 
             return True
-            return 0
 
         mul.sort()
 
@@ -698,7 +716,7 @@ class Plots(QDialog):
 
             xtickstop = xDatesc
 
-        self.ax.legend(xtickstop, loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
+        self.ax.legend(xtickstop, loc='center left', bbox_to_anchor=(1, 0.5), frameon=True)
 
         self.endPlot()
 
@@ -720,9 +738,9 @@ class Plots(QDialog):
         self.scene.addItem(proxy_widget)
 
         if self.plot_type != 4:
-            self.View.resize(int(self.width() / 960 * 750), int(self.height() / 620 * 600))
+            self.View.resize(ceil(self.width() - 200), ceil(self.height()) - 25)
         else:
-            self.View.resize(int(self.width() / 960 * 650), int(self.height() / 620 * 600))
+            self.View.resize(ceil((self.width() - 200)), ceil(self.height()) - 25)
 
         self.fig.tight_layout()
         self.View.show()
@@ -735,11 +753,15 @@ class Plots(QDialog):
         height_dif = self.size().height() / self.current_height
 
         if width_dif + height_dif != 2:
-            self.View.resize(int(self.width() / 960 * 760), int(self.height() / 620 * 480))
-            self.View.scale(1 + 1 * (width_dif - 1), 1 + 1 * (height_dif - 1))
-
             self.current_width *= width_dif
             self.current_height *= height_dif
+
+            if self.plot_type != 4:
+                self.View.resize(ceil(self.current_width - 200), ceil(self.current_height) - 25)
+            else:
+                self.View.resize(ceil((self.current_width - 200)), ceil(self.current_height) - 25)
+
+            self.View.scale(1 + 1 * (width_dif - 1), 1 + 1 * (height_dif - 1))
 
             self.timer_id = self.startTimer(300)
 
@@ -761,11 +783,13 @@ class Plots(QDialog):
 
     def instantResize(self):
         if self.plot_type != 4:
-            self.fig.set_figwidth(self.width() / 960 * 750 / self.fig.dpi)
-        else:
-            self.fig.set_figwidth(self.width() / 960 * 650 / self.fig.dpi)
+            self.fig.set_figwidth((self.width() - 270) / self.fig.dpi)
 
-        self.fig.set_figheight(self.height() / 620 * 600 / self.fig.dpi)
+            self.fig.set_figheight((self.height() - 25) / self.fig.dpi)
+        else:
+            self.fig.set_figwidth(int((self.width() - 270 / 960 * self.width()) / self.fig.dpi))
+
+            self.fig.set_figheight((self.height()) / self.fig.dpi)
 
     def goBackToInvoices(self):
         widget.setCurrentIndex(0)
@@ -841,6 +865,7 @@ widget.addWidget(plots)
 widget.addWidget(reports)
 
 widget.resize(960, 620)
+widget.setWindowTitle('Invoices')
 widget.setWindowIcon(QIcon('melusi.png'))
 widget.show()
 
