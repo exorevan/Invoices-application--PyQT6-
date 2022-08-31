@@ -660,8 +660,12 @@ class Plots(QDialog):
 
         self.isBlocked = False
 
-        self.ax.pie(y)
-
+        self.ax.pie(y, shadow=False, wedgeprops={'linewidth': 3}, colors=['#6cc399', '#ffc658', '#ab55a0',
+                                                                         '#46bcd6', '#fcda54', '#cf4f9a',
+                                                                         '#44a3d3', '#fee854', '#e94f81',
+                                                                         '#458bc9', '#f8ee5b', '#f05759',
+                                                                         '#4b6db4', '#d2de54', '#f37658'])
+#
         xYearsCount = [0]
         xYears = [x[0][:4]]
         xtickstop = []
@@ -714,12 +718,12 @@ class Plots(QDialog):
             if len(xDatesc) > 1:
                 if xYearsCount[-1] == len(xDatesc) - 1:
                     xDatesc[xYearsCount[-1]] = str(xYears[-1] + ': ' + xDatesc[xYearsCount[-1]])
-                else:
+                elif len(xYearsCount) > 1:
                     xDatesc[xYearsCount[-1] + 1] = str(xYears[-1] + ': ' + xDatesc[xYearsCount[-1] + 1])
 
             xtickstop = xDatesc
 
-        self.ax.legend(xtickstop, loc='center left', bbox_to_anchor=(1, 0.5), frameon=True)
+        self.ax.legend(xtickstop, loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
 
         self.endPlot()
 
@@ -790,7 +794,7 @@ class Plots(QDialog):
 
             self.fig.set_figheight((self.height() - 25) / self.fig.dpi)
         else:
-            self.fig.set_figwidth(int((self.width() - 270 / 960 * self.width()) / self.fig.dpi))
+            self.fig.set_figwidth(int((self.width() - 270 / 960 * self.width()) / self.fig.dpi) + 0.5)
 
             self.fig.set_figheight((self.height()) / self.fig.dpi)
 
