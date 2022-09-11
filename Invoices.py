@@ -103,14 +103,22 @@ class Invoice(QDialog):
 
         select = "select max(id) from goods"
         result = dbutil.select(select)
-        self.maxGoodsId = result[0][0]
 
-        if not self.maxGoodsId:
-            self.maxGoodsId = 0
+        if result[0][0]:
+            newMaxId = int(result[0][0])
+        else:
+            newMaxId = 0
+
+        self.maxGoodsId = newMaxId
 
         select = "select max(id) from invoices"
         result = dbutil.select(select)
-        newId = int(result[0][0]) + 1
+
+        if result[0][0]:
+            newId = int(result[0][0]) + 1
+        else:
+            newId = 0
+
         self.currentId = newId
 
         self.textbox.setText(str(datetime.now()))
@@ -193,7 +201,8 @@ class Invoice(QDialog):
                 notNullRows += 1
             else:
                 for j in range(1, self.tableWidget.columnCount() - 1):
-                    self.tableWidget.item(i, j).setBackground(QColor(255, 92, 92))
+                    if self.tableWidget.item(i, j):
+                        self.tableWidget.item(i, j).setBackground(QColor(255, 92, 92))
 
                 self.messageBox.setFont(QFont('Dubai Light', 13))
 
@@ -260,10 +269,8 @@ class Invoice(QDialog):
 
     def save(self):
         if self.textbox.toPlainText() != "" and self.goods.text() != '' and self.uniqueGoods.text() != '' and self.sum.text() != '':
-            select = "select max(id) from invoices"
-            result = dbutil.select(select)
 
-            if int(self.currentId) > int(result[0][0]) or self.deleted:
+            if int(self.currentId) > int(self.maxGoodsId) or self.deleted:
                 select = "insert into invoices (id, invoice_name, date, goods, goods_unique, earning) values (" + str(
                     self.currentId) + ", '', '2000-01-01', 0, 0, 0)"
                 result = dbutil.select(select)
@@ -311,6 +318,16 @@ class Invoice(QDialog):
             for id in toDelete:
                 select = "delete from goods where id = " + str(id)
                 result = dbutil.select(select)
+
+        select = "select max(id) from goods"
+        result = dbutil.select(select)
+
+        if result[0][0]:
+            newMaxId = int(result[0][0])
+        else:
+            newMaxId = 0
+
+        self.maxGoodsId = newMaxId
 
         self.deleted = False
 
