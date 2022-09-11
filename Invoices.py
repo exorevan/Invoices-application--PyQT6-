@@ -561,8 +561,10 @@ class Plots(QDialog):
 
         self.instantResize()
 
-        self.ax.plot(x, y, 'o', color='black', markersize=3)
-        self.ax.plot(x, y, color='#6ad487')
+        #self.ax.plot(x, y, 'o', color='black', markersize=3)
+        self.ax.plot(x, y, color='#6ad487', marker='.', markerfacecolor='black', markeredgecolor='black',
+                     markeredgewidth=0.5, markersize=self.width() / 220, rasterized=True)
+        #self.ax.plot(x, y, color='#6ad487')
 
         if not self.radio_Years.isChecked():
             self.ax.set_xticks(x, labels=xtickstop)
@@ -618,7 +620,7 @@ class Plots(QDialog):
 
         self.instantResize()
 
-        self.ax.bar(list(range(len(b))), np.array(b)[:, 1])
+        self.ax.bar(list(range(len(b))), np.array(b)[:, 1], zorder=3)
         plt.xticks(list(range(len(b))), labels=np.array(b)[:, 0])
 
         self.endPlot()
@@ -728,7 +730,8 @@ class Plots(QDialog):
         self.endPlot()
 
     def endPlot(self):
-        self.ax.grid(c='#ededed')
+        self.ax.grid(c='#dadada', which='major')
+        self.ax.grid(c='#f0f0f0', which='minor', axis='y', linestyle='--', linewidth=1, zorder=0)
 
         self.ax.tick_params(axis='x', which='major', direction='inout', length=5, width=1, color='black', pad=5,
                             labelsize=9, labelcolor='black', labelrotation=80)
@@ -774,7 +777,7 @@ class Plots(QDialog):
 
     def timerEvent(self, event):
         self.plotResize()
-        print("resize")
+        #print("resize")
         self.killTimer(self.timer_id)
 
     def plotResize(self):
