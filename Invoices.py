@@ -115,11 +115,11 @@ class Invoice(QDialog):
         result = dbutil.select(select)
 
         if result[0][0]:
-            newId = int(result[0][0]) + 1
+            newId = int(result[0][0])
         else:
             newId = 0
 
-        self.currentId = newId
+        self.currentId = newId + 1
 
         self.textbox.setText(str(datetime.now()))
         self.dateEdit.setDate(date.today())
@@ -269,8 +269,15 @@ class Invoice(QDialog):
 
     def save(self):
         if self.textbox.toPlainText() != "" and self.goods.text() != '' and self.uniqueGoods.text() != '' and self.sum.text() != '':
+            select = "select max(id) from invoices"
+            result = dbutil.select(select)
 
-            if int(self.currentId) > int(self.maxGoodsId) or self.deleted:
+            if result[0][0]:
+                maxInv = int(result[0][0])
+            else:
+                maxInv = 0
+
+            if int(self.currentId) > int(maxInv) or self.deleted:
                 select = "insert into invoices (id, invoice_name, date, goods, goods_unique, earning) values (" + str(
                     self.currentId) + ", '', '2000-01-01', 0, 0, 0)"
                 result = dbutil.select(select)
