@@ -1,7 +1,16 @@
 import logging
+import os
 import sqlite3
+import sys
 
 from conf.config import DEFAULT_DB_PATH
+
+
+def get_application_path():
+    if getattr(sys, "frozen", False):
+        return sys._MEIPASS
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
 
 
 class DBUtil:
@@ -10,7 +19,8 @@ class DBUtil:
         Initializes the DBUtil object by establishing a connection to the SQLite database
         and initializing the cursor. It also resets the sequence values for the 'goods' and 'invoices' tables.
         """
-        self.connection = sqlite3.connect(DEFAULT_DB_PATH)
+        db_path = os.path.join(get_application_path(), DEFAULT_DB_PATH)
+        self.connection = sqlite3.connect(db_path)
         self.cursor = self.connection.cursor()
         self.update(query="UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='goods';")
         self.update(query="UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='invoices';")

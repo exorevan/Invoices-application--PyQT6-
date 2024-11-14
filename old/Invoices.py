@@ -2,7 +2,9 @@ import sqlite3
 import sys
 from datetime import date, timedelta, datetime
 from math import ceil
+import os
 
+from core.lib.utils.database_util import get_application_path
 import matplotlib.pyplot as plt
 import numpy as np
 from PyQt6 import QtWidgets
@@ -20,7 +22,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 class Invoices(QDialog):
     def __init__(self):
         super(Invoices, self).__init__()
-        loadUi_("uis/invoices/Invoices.ui", self)
+        loadUi_(os.path.join(get_application_path(), "uis/invoices/Invoices.ui"), self)
         self.newInvoiceButton.clicked.connect(self.makeNewInvoice)
         self.showInvoicesButton.clicked.connect(self.showInvocies)
         self.PlotsButton.clicked.connect(self.showPlots)
@@ -84,7 +86,7 @@ class Invoice(QDialog):
 
     def __init__(self):
         super(Invoice, self).__init__()
-        loadUi_("uis/invoice/Invoice.ui", self)
+        loadUi_(os.path.join(get_application_path(), "uis/invoice/Invoice.ui"), self)
 
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.addRowButton.clicked.connect(self.addRow)
@@ -103,7 +105,9 @@ class Invoice(QDialog):
         self.tableWidget.setSortingEnabled(True)
 
         self.messageBox = QMessageBox(self)
-        self.messageBox.setWindowIcon(QIcon("uis/invoice/dokkaebi.png"))
+        self.messageBox.setWindowIcon(
+            QIcon(os.path.join(get_application_path(), "uis/invoice/dokkaebi.png"))
+        )
         self.messageBox.setWindowTitle("Fill error")
 
     def goBackToInvoices(self):
@@ -463,7 +467,7 @@ class Plots(QDialog):
 
     def __init__(self):
         super(Plots, self).__init__()
-        loadUi_("uis/plots/Plots.ui", self)
+        loadUi_(os.path.join(get_application_path(), "uis/plots/Plots.ui"), self)
 
         self.timer_id = 0
         self.current_width = self.size().width()
@@ -481,7 +485,9 @@ class Plots(QDialog):
         self.datePicker2.setDate(date.today())
 
         self.messageBox = QMessageBox(self)
-        self.messageBox.setWindowIcon(QIcon("uis/invoice/dokkaebi.png"))
+        self.messageBox.setWindowIcon(
+            QIcon(os.path.join(get_application_path(), "uis/invoice/dokkaebi.png"))
+        )
         self.messageBox.setWindowTitle("Plot error")
 
         self.scroll = QScrollArea()
@@ -1046,7 +1052,7 @@ class Plots(QDialog):
 class Reports(QDialog):
     def __init__(self):
         super(Reports, self).__init__()
-        loadUi_("uis/reports/Reports.ui", self)
+        loadUi_(os.path.join(get_application_path(), "uis/reports/Reports.ui"), self)
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.showReportsButton.clicked.connect(self.showReports)
 

@@ -1,12 +1,13 @@
+import os
 from datetime import date, datetime
 
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QIcon
 from PyQt6.QtWidgets import QDialog, QMessageBox, QTableWidgetItem
-from core.lib.utils.overwrites import loadUi_
 
-from core.lib.utils.database_util import DBUtil
+from core.lib.utils.database_util import DBUtil, get_application_path
+from core.lib.utils.overwrites import loadUi_
 
 
 class InvoicePage(QDialog):
@@ -22,7 +23,10 @@ class InvoicePage(QDialog):
 
     def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil) -> None:
         super(InvoicePage, self).__init__()
-        _ = loadUi_(uifile="uis/invoice/Invoice.ui", baseinstance=self)
+        _ = loadUi_(
+            uifile=os.path.join(get_application_path(), "uis/invoice/Invoice.ui"),
+            baseinstance=self,
+        )
 
         self.widget = widget
         self.dbutil = dbutil
@@ -44,7 +48,9 @@ class InvoicePage(QDialog):
         self.tableWidget.setSortingEnabled(True)
 
         self.messageBox = QMessageBox(self)
-        self.messageBox.setWindowIcon(QIcon("uis/invoice/dokkaebi.png"))
+        self.messageBox.setWindowIcon(
+            QIcon(os.path.join(get_application_path(), "uis/invoice/dokkaebi.png"))
+        )
         self.messageBox.setWindowTitle("Fill error")
 
     def goBackToInvoices(self) -> None:

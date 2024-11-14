@@ -1,11 +1,12 @@
+import os
 from datetime import date, timedelta
 
-from conf.config import REPORTS_TABLE_COLUMNS_COUNT
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QDialog, QHeaderView, QTableWidgetItem
-from core.lib.utils.overwrites import loadUi_
 
-from core.lib.utils.database_util import DBUtil
+from conf.config import REPORTS_TABLE_COLUMNS_COUNT
+from core.lib.utils.database_util import DBUtil, get_application_path
+from core.lib.utils.overwrites import loadUi_
 
 
 class ReportsPage(QDialog):
@@ -24,7 +25,7 @@ class ReportsPage(QDialog):
             dbutil: The database utility object used to interact with the database.
         """
         super(ReportsPage, self).__init__()
-        loadUi_("uis/reports/Reports.ui", self)
+        loadUi_(os.path.join(get_application_path(), "uis/reports/Reports.ui"), self)
 
         self.widget = widget
         self.dbutil = dbutil

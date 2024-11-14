@@ -1,11 +1,12 @@
+import os
 from datetime import date, timedelta
 
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QDialog, QTableWidgetItem
-from core.lib.utils.overwrites import loadUi_
 
 from conf.config import INVOICES_TABLE_COLUMNS_COUNT
-from core.lib.utils.database_util import DBUtil
+from core.lib.utils.database_util import DBUtil, get_application_path
+from core.lib.utils.overwrites import loadUi_
 
 
 class InvoicesPage(QDialog):
@@ -14,7 +15,7 @@ class InvoicesPage(QDialog):
 
     def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil):
         super(InvoicesPage, self).__init__()
-        loadUi_("uis/invoices/Invoices.ui", self)
+        loadUi_(os.path.join(get_application_path(), "uis/invoices/Invoices.ui"), self)
 
         self.dbutil = dbutil
         self.widget = widget
