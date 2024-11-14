@@ -4,7 +4,6 @@ from PyQt6 import QtWidgets
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QIcon
 from PyQt6.QtWidgets import QDialog, QMessageBox, QTableWidgetItem
-from core.lib.handlers.pages.invoices import InvoicesPage
 from core.lib.utils.overwrites import loadUi_
 
 from core.lib.utils.database_util import DBUtil
@@ -155,9 +154,11 @@ class InvoicePage(QDialog):
                 count: int = int(count.text())
                 price: float = float(price.text())
 
-                self.tableWidget.setItem(i, 5, QTableWidgetItem(str(count * price)))
+                value = count * price
+                formatted_value = f"{value:.2f}".rstrip("0").rstrip(".")
+                self.tableWidget.setItem(i, 5, QTableWidgetItem(formatted_value))
 
-                sum += count * price
+                sum += float(formatted_value)
                 goods += count
                 notNullRows += 1
             else:
@@ -165,7 +166,7 @@ class InvoicePage(QDialog):
                     if self.tableWidget.item(i, j):
                         self.tableWidget.item(i, j).setBackground(QColor(255, 92, 92))
 
-                self.messageBox.setFont(a0=QFont("Dubai Light", 13))
+                self.messageBox.setFont(QFont("Dubai Light", 13))
 
                 _ = self.messageOnCond(
                     check=0,
@@ -273,13 +274,13 @@ class InvoicePage(QDialog):
             )
 
         if not widthCon:
-            self.messageBox.setText(a0=f"{messageStart}width{messageEnd}{row}")
+            self.messageBox.setText(f"{messageStart}width{messageEnd}{row}")
         elif not heightCon:
-            self.messageBox.setText(a0=f"{messageStart}height{messageEnd}{row}")
+            self.messageBox.setText(f"{messageStart}height{messageEnd}{row}")
         elif not countCon:
-            self.messageBox.setText(a0=f"{messageStart}count{messageEnd}{row}")
+            self.messageBox.setText(f"{messageStart}count{messageEnd}{row}")
         elif not priceCon:
-            self.messageBox.setText(a0=f"{messageStart}price{messageEnd}{row}")
+            self.messageBox.setText(f"{messageStart}price{messageEnd}{row}")
 
     def save(self) -> None:
         if (
