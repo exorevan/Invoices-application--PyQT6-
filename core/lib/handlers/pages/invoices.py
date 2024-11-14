@@ -1,21 +1,26 @@
 from datetime import date, timedelta
 
-from config import INVOICES_TABLE_COLUMNS_COUNT
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QDialog, QTableWidgetItem
-from PyQt6.uic import loadUi
+from core.lib.utils.overwrites import loadUi_
+
+from conf.config import INVOICES_TABLE_COLUMNS_COUNT
+from core.lib.utils.database_util import DBUtil
 
 
 class InvoicesPage(QDialog):
-    def __init__(self, widget, dbutil):
-        super(InvoicesPage, self).__init__()
-        loadUi("uis/invoices/Invoices.ui", self)
+    dbutil: DBUtil
+    widget: QtWidgets.QStackedWidget
 
-        self.widget = widget
+    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil):
+        super(InvoicesPage, self).__init__()
+        loadUi_("uis/invoices/Invoices.ui", self)
+
         self.dbutil = dbutil
+        self.widget = widget
 
         self.newInvoiceButton.clicked.connect(self.makeNewInvoice)
-        self.showInvoicesButton.clicked.connect(self.showInvocies)
+        self.showInvoicesButton.clicked.connect(self.showInvoices)
         self.PlotsButton.clicked.connect(self.showPlots)
         self.ReportsButton.clicked.connect(self.showReports)
 
@@ -31,13 +36,13 @@ class InvoicesPage(QDialog):
         first_date = date.today() - timedelta(days=30)
         self.datePicker1.setDate(first_date)
         self.datePicker2.setDate(second_date)
-        self.showInvocies()
+        self.showInvoices()
 
     def makeNewInvoice(self):
         self.widget.widget(1).setNewInvoice()
         self.widget.setCurrentIndex(1)
 
-    def showInvocies(self):
+    def showInvoices(self):
         date1 = self.datePicker1.date().toString("yyyy-MM-dd")
         date2 = self.datePicker2.date().toString("yyyy-MM-dd")
 

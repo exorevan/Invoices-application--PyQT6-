@@ -1,21 +1,21 @@
 import logging
 import sqlite3
 
-from config import DEFAULT_DB_PATH
+from conf.config import DEFAULT_DB_PATH
 
 
 class DBUtil:
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the DBUtil object by establishing a connection to the SQLite database
         and initializing the cursor. It also resets the sequence values for the 'goods' and 'invoices' tables.
         """
         self.connection = sqlite3.connect(DEFAULT_DB_PATH)
         self.cursor = self.connection.cursor()
-        self.update("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='goods';")
-        self.update("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='invoices';")
+        self.update(query="UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='goods';")
+        self.update(query="UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='invoices';")
 
-    def select(self, query: str) -> list:
+    def select(self, query: str) -> list[list[str]]:
         """
         Executes a select query and returns the results as a list of tuples.
 
@@ -26,11 +26,11 @@ class DBUtil:
             list: The results of the select query as a list of tuples.
         """
         try:
-            self.cursor.execute(query)
+            _ = self.cursor.execute(query)
             self.connection.commit()
             return self.cursor.fetchall()
         except Exception as e:
-            logging.error(f"Error executing select query: {e}")
+            logging.error(msg=f"Error executing select query: {e}")
             raise
 
     def update(self, query: str) -> None:
@@ -41,8 +41,8 @@ class DBUtil:
             query (str): The update query to execute.
         """
         try:
-            self.cursor.execute(query)
+            _ = self.cursor.execute(query)
             self.connection.commit()
         except Exception as e:
-            logging.error(f"Error executing update query: {e}")
+            logging.error(msg=f"Error executing update query: {e}")
             raise

@@ -1,0 +1,5 @@
+black>=24.10.0
+isort>=5.13.2
+matplotlib==3.9.2
+python-dateutil==2.9.0.post0
+PyQt6==6.7.1

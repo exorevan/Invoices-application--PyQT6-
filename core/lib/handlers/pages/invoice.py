@@ -1,20 +1,29 @@
 from datetime import date, datetime
 
 from PyQt6 import QtWidgets
-from PyQt6.QtGui import QFont, QColor, QIcon
-from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox
-from PyQt6.uic import loadUi
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QIcon
+from PyQt6.QtWidgets import QDialog, QMessageBox, QTableWidgetItem
+from core.lib.handlers.pages.invoices import InvoicesPage
+from core.lib.utils.overwrites import loadUi_
+
+from core.lib.utils.database_util import DBUtil
 
 
 class InvoicePage(QDialog):
-    currentId = 0
-    newRows = 0
-    maxGoodsId = 0
-    deleted = False
+    dbutil: DBUtil
+    widget: QtWidgets.QStackedWidget
 
-    def __init__(self, widget, dbutil):
+    backToInvoices = pyqtSignal()
+
+    currentId: int = 0
+    newRows: int = 0
+    maxGoodsId: int = 0
+    deleted: bool = False
+
+    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil) -> None:
         super(InvoicePage, self).__init__()
-        loadUi("uis/invoice/Invoice.ui", self)
+        _ = loadUi_(uifile="uis/invoice/Invoice.ui", baseinstance=self)
 
         self.widget = widget
         self.dbutil = dbutil
@@ -26,38 +35,42 @@ class InvoicePage(QDialog):
         self.saveButton.clicked.connect(self.save)
         self.deleteButton.clicked.connect(self.delete)
 
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
-        self.tableWidget.selectionModel().selectionChanged.connect(self.disableSelection)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(
+            QtWidgets.QHeaderView.ResizeMode.Stretch
+        )
+        self.tableWidget.selectionModel().selectionChanged.connect(
+            self.disableSelection
+        )
         self.tableWidget.setColumnHidden(0, 1)
         self.tableWidget.setSortingEnabled(True)
 
         self.messageBox = QMessageBox(self)
-        self.messageBox.setWindowIcon(QIcon('uis/invoice/dokkaebi.png'))
-        self.messageBox.setWindowTitle('Fill error')
+        self.messageBox.setWindowIcon(QIcon("uis/invoice/dokkaebi.png"))
+        self.messageBox.setWindowTitle("Fill error")
 
-    def goBackToInvoices(self):
-        #invoices.showInvocies()
+    def goBackToInvoices(self) -> None:
         self.widget.setCurrentIndex(0)
+        self.backToInvoices.emit()
 
-    def setNewInvoice(self):
+    def setNewInvoice(self) -> None:
         self.newRows = 0
         self.deleted = False
 
         select = "select max(id) from goods"
-        result = self.dbutil.select(select)
+        result: list[list[str]] = self.dbutil.select(query=select)
 
         if result[0][0]:
-            newMaxId = int(result[0][0])
+            newMaxId: int = int(result[0][0])
         else:
             newMaxId = 0
 
         self.maxGoodsId = newMaxId
 
         select = "select max(id) from invoices"
-        result = self.dbutil.select(select)
+        result = self.dbutil.select(query=select)
 
         if result[0][0]:
-            newId = int(result[0][0])
+            newId: int = int(result[0][0])
         else:
             newId = 0
 
@@ -65,36 +78,42 @@ class InvoicePage(QDialog):
 
         self.textbox.setText(str(datetime.now()))
         self.dateEdit.setDate(date.today())
-        self.date.setText(str(datetime.strptime(str(date.today()), '%Y-%m-%d').strftime('%d.%m.%Y')))
+        self.date.setText(
+            str(datetime.strptime(str(date.today()), "%Y-%m-%d").strftime("%d.%m.%Y"))
+        )
         self.tableWidget.setRowCount(0)
 
-        self.uniqueGoods.setText('0')
-        self.goods.setText('0')
-        self.sum.setText('0')
+        self.uniqueGoods.setText("0")
+        self.goods.setText("0")
+        self.sum.setText("0")
 
-    def changeInfo(self, index):
+    def changeInfo(self, index: int) -> None:
         self.newRows = 0
         self.currentId = index
         self.deleted = False
 
         select = "select max(id) from goods"
-        result = self.dbutil.select(select)
-        self.maxGoodsId = result[0][0]
+        result: list[list[str]] = self.dbutil.select(query=select)
+        self.maxGoodsId = int(result[0][0])
 
         if not self.maxGoodsId:
             self.maxGoodsId = 0
 
-        select = "select id, invoice_name, date, goods, goods_unique, earning from invoices where id = " + index
-        result = self.dbutil.select(select)
+        select: str = (
+            f"select id, invoice_name, date, goods, goods_unique, earning from invoices where id = {index}"
+        )
+        result = self.dbutil.select(query=select)
 
         self.textbox.setText(str(result[0][1]))
-        self.dateEdit.setDate(datetime.strptime(result[0][2], '%Y-%m-%d'))
-        self.date.setText(str(datetime.strptime(result[0][2], '%Y-%m-%d').strftime('%d.%m.%Y')))
+        self.dateEdit.setDate(datetime.strptime(result[0][2], "%Y-%m-%d"))
+        self.date.setText(
+            str(datetime.strptime(result[0][2], "%Y-%m-%d").strftime(format="%d.%m.%Y"))
+        )
         self.uniqueGoods.setText(str(result[0][4]) + " positions")
         self.goods.setText(str(result[0][3]))
         self.sum.setText(str(result[0][5]))
 
-        select = "select id, width, height, count, price, total_price from goods where invoice = " + index
+        select = f"select id, width, height, count, price, total_price from goods where invoice = {index}"
         result = self.dbutil.select(select)
 
         self.tableWidget.setRowCount(len(result))
@@ -102,39 +121,39 @@ class InvoicePage(QDialog):
             for j in range(6):
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
 
-    def addRow(self):
-        newId = int(self.maxGoodsId) + self.newRows + 1
-        currentRow = self.tableWidget.currentRow()
+    def addRow(self) -> None:
+        newId: int = int(self.maxGoodsId) + self.newRows + 1
+        currentRow: int = self.tableWidget.currentRow()
         self.tableWidget.insertRow(currentRow + 1)
         self.tableWidget.setItem(currentRow + 1, 0, QTableWidgetItem(str(newId)))
         self.newRows += 1
 
-    def deleteRow(self):
+    def deleteRow(self) -> None:
         if self.tableWidget.rowCount() > 0:
-            currentRow = self.tableWidget.currentRow()
+            currentRow: int = self.tableWidget.currentRow()
 
             if currentRow < 0:
                 currentRow = 0
 
             self.tableWidget.removeRow(currentRow)
 
-    def calculate(self):
+    def calculate(self) -> None:
         sum = 0
         goods = 0
         notNullRows = 0
 
         for i in range(self.tableWidget.rowCount()):
-            width = self.tableWidget.item(i, 1)
-            height = self.tableWidget.item(i, 2)
-            count = self.tableWidget.item(i, 3)
-            price = self.tableWidget.item(i, 4)
+            width: int = self.tableWidget.item(i, 1)
+            height: int = self.tableWidget.item(i, 2)
+            count: int = self.tableWidget.item(i, 3)
+            price: int = self.tableWidget.item(i, 4)
 
             if self.upgradedCheck(width, height, count, price):
                 for j in range(1, self.tableWidget.columnCount() - 1):
                     self.tableWidget.item(i, j).setBackground(QColor(255, 255, 255))
 
-                count = int(count.text())
-                price = float(price.text())
+                count: int = int(count.text())
+                price: float = float(price.text())
 
                 self.tableWidget.setItem(i, 5, QTableWidgetItem(str(count * price)))
 
@@ -146,82 +165,143 @@ class InvoicePage(QDialog):
                     if self.tableWidget.item(i, j):
                         self.tableWidget.item(i, j).setBackground(QColor(255, 92, 92))
 
-                self.messageBox.setFont(QFont('Dubai Light', 13))
+                self.messageBox.setFont(a0=QFont("Dubai Light", 13))
 
-                self.messageOnCond(0, "Error, you must fill ", " in the row ", ' in the row ', width, height, count,
-                                   price, str(i + 1))
+                _ = self.messageOnCond(
+                    check=0,
+                    messageStart="Error, you must fill ",
+                    messageEnd=" in the row ",
+                    messageEndAlt=" in the row ",
+                    width=width,
+                    height=height,
+                    count=count,
+                    price=price,
+                    row=str(i + 1),
+                )
 
-                self.messageBox.exec()
+                _ = self.messageBox.exec()
 
             self.uniqueGoods.setText(str(notNullRows) + " positions")
             self.goods.setText(str(goods))
             self.sum.setText(str(sum))
 
-    def disableSelection(self, selected):
+    def disableSelection(self, selected) -> None:
         for i in selected.indexes():
             if self.tableWidget.item(i.row(), i.column()):
                 self.tableWidget.item(i.row(), i.column()).setSelected(False)
 
-    def numberCheck(self, number):
+    def numberCheck(self, number: str | int | float) -> bool:
         try:
-            float(number)
+            _ = float(number)
             return True
         except ValueError:
             return False
 
-    def upgradedCheck(self, width, height, count, price):
+    def upgradedCheck(self, width: int, height: int, count: int, price: int) -> bool:
 
-        widthCon, heightCon, countCon, priceCon = self.firstSubCheck(width, height, count, price)
+        widthCon, heightCon, countCon, priceCon = self.firstSubCheck(
+            width, height, count, price
+        )
 
         if widthCon and heightCon and countCon and priceCon:
-            widthCon, heightCon, countCon, priceCon = self.secondSubCheck(width, height, count, price)
+            widthCon, heightCon, countCon, priceCon = self.secondSubCheck(
+                width, height, count, price
+            )
 
             if widthCon and heightCon and countCon and priceCon:
                 return True
 
         return False
 
-    def firstSubCheck(self, width, height, count, price):
-        return width is not None, height is not None, count is not None, price is not None
+    def firstSubCheck(
+        self,
+        width: int | None,
+        height: int | None,
+        count: int | None,
+        price: int | None,
+    ) -> tuple[bool, bool, bool, bool]:
+        return (
+            width is not None,
+            height is not None,
+            count is not None,
+            price is not None,
+        )
 
-    def secondSubCheck(self, width, height, count, price):
-        return self.numberCheck(width.text()), self.numberCheck(height.text()), count.text().isdigit(), \
-               self.numberCheck(price.text())
+    def secondSubCheck(
+        self, width, height, count, price
+    ) -> tuple[bool, bool, bool, bool]:
+        return (
+            self.numberCheck(number=width.text()),
+            self.numberCheck(number=height.text()),
+            count.text().isdigit(),
+            self.numberCheck(number=price.text()),
+        )
 
-    def messageOnCond(self, check, messageStart, messageEnd, messageEndAlt, width, height, count, price, row):
+    def messageOnCond(
+        self,
+        check: int,
+        messageStart: str,
+        messageEnd: str,
+        messageEndAlt: str,
+        width: int,
+        height: int,
+        count: int,
+        price: int,
+        row: int,
+    ):
         if not check:
-            widthCon, heightCon, countCon, priceCon = self.firstSubCheck(width, height, count, price)
+            widthCon, heightCon, countCon, priceCon = self.firstSubCheck(
+                width, height, count, price
+            )
 
             if widthCon and heightCon and countCon and priceCon:
-                self.messageOnCond(1, "Error, ", " must be a float number (1.1, 3, 5.99...) in the row ",
-                                   " must be an integer number (1, 2, 3..) in the row ", width, height, count, price,
-                                   row)
+                _ = self.messageOnCond(
+                    check=1,
+                    messageStart="Error, ",
+                    messageEnd=" must be a float number (1.1, 3, 5.99...) in the row ",
+                    messageEndAlt=" must be an integer number (1, 2, 3..) in the row ",
+                    width=width,
+                    height=height,
+                    count=count,
+                    price=price,
+                    row=row,
+                )
                 return True
         else:
-            widthCon, heightCon, countCon, priceCon = self.secondSubCheck(width, height, count, price)
+            widthCon, heightCon, countCon, priceCon = self.secondSubCheck(
+                width, height, count, price
+            )
 
         if not widthCon:
-            self.messageBox.setText(messageStart + "width" + messageEnd + row)
+            self.messageBox.setText(a0=f"{messageStart}width{messageEnd}{row}")
         elif not heightCon:
-            self.messageBox.setText(messageStart + "height" + messageEnd + row)
+            self.messageBox.setText(a0=f"{messageStart}height{messageEnd}{row}")
         elif not countCon:
-            self.messageBox.setText(messageStart + "count" + messageEndAlt + row)
+            self.messageBox.setText(a0=f"{messageStart}count{messageEnd}{row}")
         elif not priceCon:
-            self.messageBox.setText(messageStart + "price" + messageEnd + row)
+            self.messageBox.setText(a0=f"{messageStart}price{messageEnd}{row}")
 
-    def save(self):
-        if self.textbox.toPlainText() != "" and self.goods.text() != '' and self.uniqueGoods.text() != '' and self.sum.text() != '':
+    def save(self) -> None:
+        if (
+            self.textbox.toPlainText() != ""
+            and self.goods.text() != ""
+            and self.uniqueGoods.text() != ""
+            and self.sum.text() != ""
+        ):
             select = "select max(id) from invoices"
             result = self.dbutil.select(select)
 
             if result[0][0]:
-                maxInv = int(result[0][0])
+                maxInv: int = int(result[0][0])
             else:
                 maxInv = 0
 
             if int(self.currentId) > int(maxInv) or self.deleted:
-                select = "insert into invoices (id, invoice_name, date, goods, goods_unique, earning) values (" + str(
-                    self.currentId) + ", '', '2000-01-01', 0, 0, 0)"
+                select: str = (
+                    "insert into invoices (id, invoice_name, date, goods, goods_unique, earning) values ("
+                    + str(self.currentId)
+                    + ", '', '2000-01-01', 0, 0, 0)"
+                )
                 result = self.dbutil.select(select)
 
             self.calculate()
@@ -232,9 +312,12 @@ class InvoicePage(QDialog):
             ids = []
 
             for i in range(self.tableWidget.rowCount()):
-                if self.upgradedCheck(self.tableWidget.item(i, 1), self.tableWidget.item(i, 2),
-                                      self.tableWidget.item(i, 3),
-                                      self.tableWidget.item(i, 4)):
+                if self.upgradedCheck(
+                    self.tableWidget.item(i, 1),
+                    self.tableWidget.item(i, 2),
+                    self.tableWidget.item(i, 3),
+                    self.tableWidget.item(i, 4),
+                ):
                     ids.append(int(self.tableWidget.item(i, 0).text()))
 
                     if int(self.tableWidget.item(i, 0).text()) > self.maxGoodsId:

@@ -1,4 +1,5 @@
 import sys
+import typing as ty
 
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QApplication
@@ -11,29 +12,36 @@ from core.lib.handlers.pages.reports import ReportsPage
 from core.lib.utils.database_util import DBUtil
 
 
+@ty.final
 class MainApplication(Handler):
-    def __init__(self):
+    def __init__(self) -> None:
         self.handler_name = "Main Application"
 
     @classmethod
-    def run(self):
-        app = QApplication(sys.argv)
-        widget = QtWidgets.QStackedWidget()
-        dbutil = DBUtil()
+    def run(cls) -> ty.NoReturn:
+        dbutil: DBUtil = DBUtil()
 
-        invoices = InvoicesPage(widget, dbutil)
-        invoice = InvoicePage(widget, dbutil)
-        plots = PlotsPage(widget, dbutil)
-        reports = ReportsPage(widget, dbutil)
+        try:
+            app: QApplication = QApplication(sys.argv)
+            widget: QtWidgets.QStackedWidget = QtWidgets.QStackedWidget()
 
-        widget.addWidget(invoices)
-        widget.addWidget(invoice)
-        widget.addWidget(plots)
-        widget.addWidget(reports)
-        widget.show()
+            invoices: InvoicesPage = InvoicesPage(widget, dbutil)
+            invoice: InvoicePage = InvoicePage(widget, dbutil)
+            plots: PlotsPage = PlotsPage(widget, dbutil)
+            reports: ReportsPage = ReportsPage(widget, dbutil)
 
-        sys.exit(app.exec())
-        dbutil.connection.close()
+            _ = widget.addWidget(invoices)
+            _ = widget.addWidget(invoice)
+            _ = widget.addWidget(plots)
+            _ = widget.addWidget(reports)
+
+            _ = invoice.backToInvoices.connect(invoices.showInvoices)
+
+            widget.show()
+
+            sys.exit(app.exec())
+        finally:
+            dbutil.connection.close()
 
 
 if __name__ == "__main__":

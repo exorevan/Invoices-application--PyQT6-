@@ -1,8 +1,11 @@
 from datetime import date, timedelta
 
-from config import REPORTS_TABLE_COLUMNS_COUNT
+from conf.config import REPORTS_TABLE_COLUMNS_COUNT
+from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QDialog, QHeaderView, QTableWidgetItem
-from PyQt6.uic import loadUi
+from core.lib.utils.overwrites import loadUi_
+
+from core.lib.utils.database_util import DBUtil
 
 
 class ReportsPage(QDialog):
@@ -11,7 +14,7 @@ class ReportsPage(QDialog):
     It provides functionality to update the summary labels and table with data from the database.
     """
 
-    def __init__(self, widget, dbutil):
+    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil):
         """
         Initializes the ReportsPage class by loading the UI file, setting up the initial date range,
         connecting signals to slots, and showing the reports.
@@ -21,7 +24,7 @@ class ReportsPage(QDialog):
             dbutil: The database utility object used to interact with the database.
         """
         super(ReportsPage, self).__init__()
-        loadUi("uis/reports/Reports.ui", self)
+        loadUi_("uis/reports/Reports.ui", self)
 
         self.widget = widget
         self.dbutil = dbutil

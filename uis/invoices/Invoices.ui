@@ -587,7 +587,7 @@ border: 2px solid #6ad487;
 QPushButton:hover {
 
 	
-	background-color: #ffff;
+	background-color: #ffffff;
 	border: 3px solid #6ad487;
 	selection-color: rgb(92, 186, 117);
 	font: 25 16pt &quot;Dubai Light&quot;;

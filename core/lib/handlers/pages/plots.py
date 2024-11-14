@@ -1,28 +1,30 @@
 import logging
 from datetime import date, datetime, timedelta
 from math import ceil
+from typing import final
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dateutil import relativedelta
 from dateutil.relativedelta import relativedelta
 from matplotlib import ticker
-from matplotlib.backends.backend_qt5agg import \
-    FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtWidgets import QDialog, QMessageBox, QScrollArea
-from PyQt6.uic import loadUi
+from core.lib.utils.overwrites import loadUi_
+
+from core.lib.utils.database_util import DBUtil
 
 
+@final
 class PlotsPage(QDialog):
     plot_type = 0
     isBlocked = True
 
-    def __init__(self, widget, dbutil):
+    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil):
         super(PlotsPage, self).__init__()
-        loadUi("uis/plots/Plots.ui", self)
+        loadUi_("uis/plots/Plots.ui", self)
 
         self.widget = widget
         self.dbutil = dbutil
@@ -51,7 +53,7 @@ class PlotsPage(QDialog):
         self.fig, self.ax = plt.subplots()
         _, _ = self.startPlot(0)
 
-    def datesBetween(self, sdate, edate):
+    def datesBetween(self, sdate, edate) -> list[str]:
         """
         Returns a list of dates between sdate and edate (inclusive).
         """
@@ -65,10 +67,10 @@ class PlotsPage(QDialog):
 
         return dates
 
-    def toDate(self, date):
+    def toDate(self, date: str) -> datetime:
         return datetime.strptime(date, "%Y-%m-%d")
 
-    def toString(self, date):
+    def toString(self, date: datetime) -> str:
         return date.strftime("%Y-%m-%d")
 
     def radio_buttons(self, x):
