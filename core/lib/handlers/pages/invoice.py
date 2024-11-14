@@ -1,5 +1,6 @@
 import os
 from datetime import date, datetime
+from typing import final
 
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import pyqtSignal
@@ -10,11 +11,12 @@ from core.lib.utils.database_util import DBUtil, get_application_path
 from core.lib.utils.overwrites import loadUi_
 
 
+@final
 class InvoicePage(QDialog):
     dbutil: DBUtil
     widget: QtWidgets.QStackedWidget
 
-    backToInvoices = pyqtSignal()
+    backToInvoices: pyqtSignal = pyqtSignal()
 
     currentId: int = 0
     newRows: int = 0

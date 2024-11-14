@@ -60,6 +60,7 @@ class PlotsPage(QDialog):
         """
         Returns a list of dates between sdate and edate (inclusive).
         """
+
         # Calculate the difference between edate and sdate
         delta = edate - sdate
 
@@ -76,26 +77,28 @@ class PlotsPage(QDialog):
     def toString(self, date: datetime) -> str:
         return date.strftime("%Y-%m-%d")
 
-    def radio_buttons(self, x):
+    def radio_buttons(self, dates: list[str]) -> list[str]:
         if self.radio_Auto.isChecked():
             if self.plot_type == 4:
-                mas = x
+                dates_list: list[str] = list(dates)
 
-                if len(x) > 12:
-                    d = ceil(len(x) / 12)
-                    mas = x[::d]
+                if len(dates) > 12:
+                    d = ceil(len(dates) / 12)
+                    dates_list = dates[::d]
+                    dates_list.append(dates[-1])
 
-                return mas
+                return dates_list
+
             else:
-                mas = x
+                dates_list = dates
 
-                if len(x) > 31:  # for two
-                    a = int(len(x) / 30)
-                    mas = x[::a]
+                if len(dates) > 31:  # for two
+                    a = int(len(dates) / 30)
+                    dates_list = dates[::a]
 
-                    mas[-1] = mas[-1][13:] + x[-1][:]
+                    dates_list[-1] = dates_list[-1][13:] + dates[-1][:]
 
-                return mas
+                return dates_list
 
         elif self.radio_Years.isChecked():
             date1 = self.toString(self.datePicker1.date().toPyDate())
@@ -104,57 +107,64 @@ class PlotsPage(QDialog):
 
             year1 = int(date1[:4])
 
-            mas = [x[0]]
+            dates_list = [dates[0]]
 
             if d > 0:
-                mas.append(str(year1 + 1) + "-01-01")
+                dates_list.append(str(year1 + 1) + "-01-01")
 
             if d >= 2:
                 for i in range(2, d + 1):
-                    mas.append(str(year1 + i) + "-01-01")
+                    dates_list.append(str(year1 + i) + "-01-01")
 
-            if x[-1] not in mas:
-                mas.append(x[-1])
+            if dates[-1] not in dates_list:
+                dates_list.append(dates[-1])
 
-            return mas
+            return dates_list
 
         elif self.radio_Months.isChecked():
-            mas = [x[0]]
+            dates_list = [dates[0]]
 
-            firstDate = self.toDate(x[0]) + relativedelta(months=1)
+            firstDate = self.toDate(dates[0]) + relativedelta(months=1)
             firstDateNewMonth = self.toString(firstDate)[:7] + "-01"
 
             currentDate = self.toDate(firstDateNewMonth)
 
             while True:
-                if currentDate > (self.toDate(x[-1]) - relativedelta(days=1)):
+                if currentDate > (self.toDate(dates[-1]) - relativedelta(days=1)):
                     break
 
-                mas.append(self.toString(currentDate))
+                dates_list.append(self.toString(currentDate))
                 currentDate += relativedelta(months=1)
 
-            mas.append(x[-1])
+            dates_list.append(dates[-1])
 
-            logging.debug(mas)
-            return mas
+            logging.debug(dates_list)
+            return dates_list
+
         elif self.radio_Weeks.isChecked():
-            if self.toDate(x[0]) + relativedelta(days=1) > self.toDate(x[-1]):
+            if self.toDate(dates[0]) + relativedelta(days=1) > self.toDate(dates[-1]):
                 return []
-            elif self.toDate(x[0]) + relativedelta(days=1) == self.toDate(x[-1]):
-                return [x[0], self.toString(self.toDate(x[0]) + relativedelta(days=1))]
 
-            firstMonday = self.toDate(x[0]) + timedelta(
-                days=-self.toDate(x[0]).weekday(), weeks=1
+            elif self.toDate(dates[0]) + relativedelta(days=1) == self.toDate(
+                dates[-1]
+            ):
+                return [
+                    dates[0],
+                    self.toString(self.toDate(dates[0]) + relativedelta(days=1)),
+                ]
+
+            firstMonday = self.toDate(dates[0]) + timedelta(
+                days=-self.toDate(dates[0]).weekday(), weeks=1
             )
 
-            if firstMonday > self.toDate(x[-1]):
-                return [x[0], self.toString(self.toDate(x[-1]))]
+            if firstMonday > self.toDate(dates[-1]):
+                return [dates[0], self.toString(self.toDate(dates[-1]))]
 
             firstMonday = self.toString(firstMonday)
 
-            xDates = [x[0]]
-            xDates.extend(x[x.index(firstMonday) : -1 : 7])
-            xDates.append(x[-1])
+            xDates = [dates[0]]
+            xDates.extend(dates[dates.index(firstMonday) : -1 : 7])
+            xDates.append(dates[-1])
 
             return xDates
 
@@ -391,7 +401,7 @@ class PlotsPage(QDialog):
         if sum(y) < 1:
             self.messageBox.setFont(QFont("Dubai Light", 13))
             self.messageBox.setText(
-                f"There's no goods in this period ({self.datePicker1.date().toPyDate()} - {self.datePicker2.date().toPyDate()})"
+                f"There're no goods in this period ({self.datePicker1.date().toPyDate()} - {self.datePicker2.date().toPyDate()})"
             )
             self.messageBox.exec()
 

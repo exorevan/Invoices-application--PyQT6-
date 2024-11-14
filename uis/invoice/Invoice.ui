@@ -531,6 +531,9 @@ border: 2px solid white;</string>
           <property name="text">
            <string>TextLabel</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
          </widget>
          <widget class="QLabel" name="sum">
           <property name="geometry">
@@ -555,6 +558,9 @@ border: 2px solid white;</string>
           </property>
           <property name="text">
            <string>TextLabel</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </widget>
@@ -1016,6 +1022,9 @@ QPushButton:hover{
 border-radius: 5;
 color: black; 
 border: 2px solid white;</string>
+              </property>
+              <property name="verticalScrollBarPolicy">
+               <enum>Qt::ScrollBarAlwaysOn</enum>
               </property>
               <attribute name="verticalHeaderVisible">
                <bool>false</bool>
