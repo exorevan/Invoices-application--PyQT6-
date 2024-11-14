@@ -9,6 +9,7 @@ from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor, QIcon
 from PyQt6.QtWidgets import *
+from conf.config import DEFAULT_DB_PATH
 from core.lib.utils.overwrites import loadUi_
 from dateutil import relativedelta
 from dateutil.relativedelta import relativedelta
@@ -1098,7 +1099,7 @@ class Reports(QDialog):
 
 class DBUtil:
     def __init__(self):
-        self.connection = sqlite3.connect("db/Accounting.db")
+        self.connection = sqlite3.connect(DEFAULT_DB_PATH)
         self.cursor = self.connection.cursor()
         self.select("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='goods';")
         self.select("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='invoices';")
