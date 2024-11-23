@@ -4,12 +4,12 @@ import typing as ty
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QApplication
 
-from core.lib.handlers.handler_interface import Handler
-from core.lib.handlers.pages.invoice import InvoicePage
-from core.lib.handlers.pages.invoices import InvoicesPage
-from core.lib.handlers.pages.plots import PlotsPage
-from core.lib.handlers.pages.reports import ReportsPage
-from core.lib.utils.database_util import DBUtil
+from core.handlers.handler_interface import Handler
+from core.handlers.pages.invoice import InvoicePage
+from core.handlers.pages.invoices import InvoicesPage
+from core.handlers.pages.plots import PlotsPage
+from core.handlers.pages.reports import ReportsPage
+from core.db.util import DBUtil
 
 
 @ty.final
@@ -19,29 +19,26 @@ class MainApplication(Handler):
 
     @classmethod
     def run(cls) -> ty.NoReturn:
-        dbutil: DBUtil = DBUtil()
+        DBUtil.setup()
 
-        try:
-            app: QApplication = QApplication(sys.argv)
-            widget: QtWidgets.QStackedWidget = QtWidgets.QStackedWidget()
+        app: QApplication = QApplication(sys.argv)
+        widget: QtWidgets.QStackedWidget = QtWidgets.QStackedWidget()
 
-            invoices: InvoicesPage = InvoicesPage(widget, dbutil)
-            invoice: InvoicePage = InvoicePage(widget, dbutil)
-            plots: PlotsPage = PlotsPage(widget, dbutil)
-            reports: ReportsPage = ReportsPage(widget, dbutil)
+        invoices: InvoicesPage = InvoicesPage(widget)
+        invoice: InvoicePage = InvoicePage(widget)
+        plots: PlotsPage = PlotsPage(widget)
+        reports: ReportsPage = ReportsPage(widget)
 
-            _ = widget.addWidget(invoices)
-            _ = widget.addWidget(invoice)
-            _ = widget.addWidget(plots)
-            _ = widget.addWidget(reports)
+        _ = widget.addWidget(invoices)
+        _ = widget.addWidget(invoice)
+        _ = widget.addWidget(plots)
+        _ = widget.addWidget(reports)
 
-            _ = invoice.backToInvoices.connect(invoices.showInvoices)
+        _ = invoice.backToInvoices.connect(invoices.showInvoices)
 
-            widget.show()
+        widget.show()
 
-            sys.exit(app.exec())
-        finally:
-            dbutil.connection.close()
+        sys.exit(app.exec())
 
 
 if __name__ == "__main__":

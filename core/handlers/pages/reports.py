@@ -5,30 +5,23 @@ from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QDialog, QHeaderView, QTableWidgetItem
 
 from conf.config import REPORTS_TABLE_COLUMNS_COUNT
-from core.lib.utils.database_util import DBUtil, get_application_path
-from core.lib.utils.overwrites import loadUi_
+from core.db.crud import reports as crud
+from core.db.util import get_application_path
+from core.utils.overwrites import loadUi_
 
 
 class ReportsPage(QDialog):
+    widget: QtWidgets.QStackedWidget
     """
     The ReportsPage class is responsible for displaying reports based on selected date ranges.
     It provides functionality to update the summary labels and table with data from the database.
     """
 
-    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil):
-        """
-        Initializes the ReportsPage class by loading the UI file, setting up the initial date range,
-        connecting signals to slots, and showing the reports.
-
-        Args:
-            widget: The widget that contains the ReportsPage.
-            dbutil: The database utility object used to interact with the database.
-        """
+    def __init__(self, widget: QtWidgets.QStackedWidget):
         super(ReportsPage, self).__init__()
         loadUi_(os.path.join(get_application_path(), "uis/reports/Reports.ui"), self)
 
         self.widget = widget
-        self.dbutil = dbutil
 
         self.datePicker1.setDate(date.today() - timedelta(days=30))
         self.datePicker2.setDate(date.today())
@@ -56,7 +49,9 @@ class ReportsPage(QDialog):
         Updates the summary labels and table with data based on the selected date range.
         """
         date1 = self.datePicker1.date().toString("yyyy-MM-dd")
-        date2 = self.datePicker2.date().toString("yyyy-MM-dd")
+        date2: str = (self.datePicker2.date().toPyDate() + timedelta(days=1)).strftime(
+            "yyyy-MM-dd"
+        )
 
         self.datePickerValidation()
 
@@ -71,11 +66,10 @@ class ReportsPage(QDialog):
             date1: The start date of the date range.
             date2: The end date of the date range.
         """
-        select = f"select sum(count), sum(total_price) from goods inner join invoices on goods.invoice = invoices.id where date between '{date1}' and '{date2}'"
-        result = self.dbutil.select(select)
+        result = crud.get_goods_summary(date1=date1, date2=date2)[0]
 
-        self.goodsLabel.setText(str(result[0][0]))
-        self.sumLabel.setText(str(result[0][1]))
+        self.goodsLabel.setText(result.count if result.count else "0")
+        self.sumLabel.setText(result.total_price if result.total_price else "0")
 
     def updateTable(self, date1: str, date2: str):
         """
@@ -85,14 +79,15 @@ class ReportsPage(QDialog):
             date1: The start date of the date range.
             date2: The end date of the date range.
         """
-        select = f"select width, height, sum(count), sum(total_price) from goods inner join invoices on goods.invoice = invoices.id where date between '{date1}' and '{date2}' group by width, height"
-        result = self.dbutil.select(select)
+        result = crud.get_goods_parameters(date1=date1, date2=date2)
 
         self.tableWidget.setRowCount(len(result))
 
         for i, row in enumerate(result):
-            for j in range(REPORTS_TABLE_COLUMNS_COUNT):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(row[j])))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(row.width))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(row.height))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(row.count))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(row.price))
 
     def goBackToInvoices(self):
         """

@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "debugpy",
+        "request": "launch",
+        "name": "App debug",
+        "program": "main.py",
+        "python": ".venv/Scripts/python.exe"
+      }
+    ]
+  }

@@ -14,8 +14,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtWidgets import QDialog, QMessageBox, QScrollArea
 
-from core.lib.utils.database_util import DBUtil, get_application_path
-from core.lib.utils.overwrites import loadUi_
+from core.db.crud import plots as crud
+from core.db.util import get_application_path
+from core.utils.overwrites import loadUi_
 
 
 @final
@@ -23,12 +24,11 @@ class PlotsPage(QDialog):
     plot_type = 0
     isBlocked = True
 
-    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil):
+    def __init__(self, widget: QtWidgets.QStackedWidget):
         super(PlotsPage, self).__init__()
         loadUi_(os.path.join(get_application_path(), "uis/plots/Plots.ui"), self)
 
         self.widget = widget
-        self.dbutil = dbutil
 
         self.timer_id = 0
         self.current_width = self.size().width()
@@ -202,18 +202,11 @@ class PlotsPage(QDialog):
 
     def show_func_plot(self, x, y, subject):
         for i in range(len(x) - 1):
-            select = (
-                "select sum("
-                + subject
-                + ") from invoices where date >= '"
-                + x[i]
-                + "' and date < '"
-                + x[i + 1]
-                + "'"
-            )
-            result = self.dbutil.select(select)
+            result = crud.get_invoice_sum(subject=subject, date1=x[i], date2=x[i + 1])[
+                0
+            ]
 
-            y.append(result[0][0])
+            y.append(float(result.sum) if result.sum else 0)
 
             if not y[i]:
                 y[i] = 0
@@ -327,20 +320,16 @@ class PlotsPage(QDialog):
     def show_func_bar(self):
         _, _ = self.startPlot(3)
 
-        select = (
-            """select goods.width, goods.height, goods.total_price from goods inner join invoices on invoices.id 
-                 = goods.invoice where date >= '"""
-            + self.toString(self.datePicker1.date().toPyDate())
-            + "' and date < '"
-            + self.toString(self.datePicker2.date().toPyDate() + relativedelta(days=1))
-            + "'"
+        result = crud.get_goods(
+            date1=self.datePicker1.date().toPyDate(),
+            date2=self.datePicker2.date().toPyDate() + relativedelta(days=1),
         )
 
-        result = self.dbutil.select(select)
-
-        mul = []
-        for i in result:
-            mul.append([i[0] * i[1], i[2]])
+        mul: list[list[float]] = []
+        for record in result:
+            mul.append(
+                [float(record.width) * float(record.height), float(record.total_price)]
+            )
 
         if len(mul) == 0:
             plt.close(self.fig)
@@ -362,11 +351,11 @@ class PlotsPage(QDialog):
 
         b = [mul[0]]
 
-        for i in range(1, len(mul)):
-            if mul[i][0] in list(np.array(b)[:, 0]):
-                b[-1][1] += mul[i][1]
+        for record in range(1, len(mul)):
+            if mul[record][0] in list(np.array(b)[:, 0]):
+                b[-1][1] += mul[record][1]
             else:
-                b.append([mul[i][0], mul[i][1]])
+                b.append([mul[record][0], mul[record][1]])
 
         self.instantResize()
 
@@ -383,15 +372,10 @@ class PlotsPage(QDialog):
             return 0
 
         for i in range(len(x) - 1):
-            select = (
-                "select sum(earning) from invoices where date >= '"
-                + x[i]
-                + "' and date < '"
-                + x[i + 1]
-                + "'"
-            )
-            result = self.dbutil.select(select)
-            y.append(result[0][0])
+            result = crud.get_invoice_sum(
+                subject="earning", date1=x[i], date2=x[i + 1]
+            )[0]
+            y.append(float(result.sum) if result.sum else 0)
 
             if not y[i]:
                 y[i] = 0

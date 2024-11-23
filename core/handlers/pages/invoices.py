@@ -1,23 +1,22 @@
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QDialog, QTableWidgetItem
 
 from conf.config import INVOICES_TABLE_COLUMNS_COUNT
-from core.lib.utils.database_util import DBUtil, get_application_path
-from core.lib.utils.overwrites import loadUi_
+from core.db.crud import invoices as crud
+from core.db.util import get_application_path
+from core.utils.overwrites import loadUi_
 
 
 class InvoicesPage(QDialog):
-    dbutil: DBUtil
     widget: QtWidgets.QStackedWidget
 
-    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil):
+    def __init__(self, widget: QtWidgets.QStackedWidget):
         super(InvoicesPage, self).__init__()
         loadUi_(os.path.join(get_application_path(), "uis/invoices/Invoices.ui"), self)
 
-        self.dbutil = dbutil
         self.widget = widget
 
         self.newInvoiceButton.clicked.connect(self.makeNewInvoice)
@@ -44,17 +43,21 @@ class InvoicesPage(QDialog):
         self.widget.setCurrentIndex(1)
 
     def showInvoices(self):
-        date1 = self.datePicker1.date().toString("yyyy-MM-dd")
-        date2 = self.datePicker2.date().toString("yyyy-MM-dd")
+        date1: str = self.datePicker1.date().toString("yyyy-MM-dd")
+        date2: str = (self.datePicker2.date().toPyDate() + timedelta(days=1)).strftime(
+            "yyyy-MM-dd"
+        )
 
-        select = f"select id, date, invoice_name as 'Invoice Name', goods, earning from invoices where date between '{date1}' and '{date2}'"
-        result = self.dbutil.select(select)
+        result = crud.get_invoices(date1, date2)
 
         self.tableWidget.setRowCount(len(result))
 
         for i, row in enumerate(result):
-            for j in range(INVOICES_TABLE_COLUMNS_COUNT):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(row[j])))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(row.id))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(row.date))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(row.name))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(row.goods))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem(row.earning))
 
     def goToInvoice(self, index):
         row = self.tableWidget.item(self.tableWidget.currentRow(), 0).text()

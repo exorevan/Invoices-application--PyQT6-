@@ -1,6 +1,7 @@
 black>=24.10.0
 isort>=5.13.2
 matplotlib==3.9.2
-pyinstaller==6.11.1 # with: pyinstaller --windowed --icon=melusi.ico --add-data "db/Accounting.db;db" --add-data "uis;uis" --name=Invoices main.py
+pyinstaller==6.11.1 # with: pyinstaller --windowed --icon="uis/app/iq.ico" --add-data "uis;uis" --name=Invoices main.py
 python-dateutil==2.9.0.post0
 PyQt6==6.7.1
+sqlalchemy==2.0.36

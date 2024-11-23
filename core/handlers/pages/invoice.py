@@ -7,13 +7,13 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QIcon
 from PyQt6.QtWidgets import QDialog, QMessageBox, QTableWidgetItem
 
-from core.lib.utils.database_util import DBUtil, get_application_path
-from core.lib.utils.overwrites import loadUi_
+from core.db.crud import invoice as crud
+from core.db.util import get_application_path
+from core.utils.overwrites import loadUi_
 
 
 @final
 class InvoicePage(QDialog):
-    dbutil: DBUtil
     widget: QtWidgets.QStackedWidget
 
     backToInvoices: pyqtSignal = pyqtSignal()
@@ -23,7 +23,7 @@ class InvoicePage(QDialog):
     maxGoodsId: int = 0
     deleted: bool = False
 
-    def __init__(self, widget: QtWidgets.QStackedWidget, dbutil: DBUtil) -> None:
+    def __init__(self, widget: QtWidgets.QStackedWidget) -> None:
         super(InvoicePage, self).__init__()
         _ = loadUi_(
             uifile=os.path.join(get_application_path(), "uis/invoice/Invoice.ui"),
@@ -31,7 +31,6 @@ class InvoicePage(QDialog):
         )
 
         self.widget = widget
-        self.dbutil = dbutil
 
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.addRowButton.clicked.connect(self.addRow)
@@ -63,23 +62,15 @@ class InvoicePage(QDialog):
         self.newRows = 0
         self.deleted = False
 
-        select = "select max(id) from goods"
-        result: list[list[str]] = self.dbutil.select(query=select)
+        goods_result = crud.get_goods_count()[0]
 
-        if result[0][0]:
-            newMaxId: int = int(result[0][0])
-        else:
-            newMaxId = 0
+        newMaxId: int = int(goods_result.max_id) if goods_result.max_id else 0
 
         self.maxGoodsId = newMaxId
 
-        select = "select max(id) from invoices"
-        result = self.dbutil.select(query=select)
+        invoices_result = crud.get_invoices_count()[0]
 
-        if result[0][0]:
-            newId: int = int(result[0][0])
-        else:
-            newId = 0
+        newId: int = int(invoices_result.max_id) if invoices_result.max_id else 0
 
         self.currentId = newId + 1
 
@@ -99,34 +90,33 @@ class InvoicePage(QDialog):
         self.currentId = index
         self.deleted = False
 
-        select = "select max(id) from goods"
-        result: list[list[str]] = self.dbutil.select(query=select)
-        self.maxGoodsId = int(result[0][0])
+        goods_count_result = crud.get_goods_count()[0]
+        self.maxGoodsId = (
+            int(goods_count_result.max_id) if goods_count_result.max_id else 0
+        )
 
         if not self.maxGoodsId:
             self.maxGoodsId = 0
 
-        select: str = (
-            f"select id, invoice_name, date, goods, goods_unique, earning from invoices where id = {index}"
-        )
-        result = self.dbutil.select(query=select)
+        invoice_result = crud.get_invoice(id=index)[0]
 
-        self.textbox.setText(str(result[0][1]))
-        self.dateEdit.setDate(datetime.strptime(result[0][2], "%Y-%m-%d"))
-        self.date.setText(
-            str(datetime.strptime(result[0][2], "%Y-%m-%d").strftime(format="%d.%m.%Y"))
-        )
-        self.uniqueGoods.setText(str(result[0][4]) + " positions")
-        self.goods.setText(str(result[0][3]))
-        self.sum.setText(str(result[0][5]))
+        self.textbox.setText(invoice_result.name)
+        self.dateEdit.setDate(datetime.strptime(invoice_result.date, "%d.%m.%Y"))
+        self.date.setText(invoice_result.date)
+        self.uniqueGoods.setText(invoice_result.goods_unique + " positions")
+        self.goods.setText(invoice_result.goods)
+        self.sum.setText(invoice_result.earning)
 
-        select = f"select id, width, height, count, price, total_price from goods where invoice = {index}"
-        result = self.dbutil.select(select)
+        goods_result = crud.get_goods(id=index)
 
-        self.tableWidget.setRowCount(len(result))
-        for i in range(len(result)):
-            for j in range(6):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(result[i][j])))
+        self.tableWidget.setRowCount(len(goods_result))
+        for i, val in enumerate(goods_result):
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(val.id))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(val.width))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(val.height))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(val.count))
+            self.tableWidget.setItem(i, 4, QTableWidgetItem(val.price))
+            self.tableWidget.setItem(i, 5, QTableWidgetItem(val.total_price))
 
     def addRow(self) -> None:
         newId: int = int(self.maxGoodsId) + self.newRows + 1
@@ -163,8 +153,8 @@ class InvoicePage(QDialog):
                 price: float = float(price.text())
 
                 value = count * price
-                formatted_value = f"{value:.2f}".rstrip("0").rstrip(".")
-                self.tableWidget.setItem(i, 5, QTableWidgetItem(formatted_value))
+                formatted_value = value
+                self.tableWidget.setItem(i, 5, QTableWidgetItem(str(formatted_value)))
 
                 sum += float(formatted_value)
                 goods += count
@@ -190,9 +180,9 @@ class InvoicePage(QDialog):
 
                 _ = self.messageBox.exec()
 
-            self.uniqueGoods.setText(str(notNullRows) + " positions")
-            self.goods.setText(str(goods))
-            self.sum.setText(str(sum))
+        self.uniqueGoods.setText(str(notNullRows) + " positions")
+        self.goods.setText(str(goods))
+        self.sum.setText(str(sum))
 
     def disableSelection(self, selected) -> None:
         for i in selected.indexes():
@@ -297,26 +287,23 @@ class InvoicePage(QDialog):
             and self.uniqueGoods.text() != ""
             and self.sum.text() != ""
         ):
-            select = "select max(id) from invoices"
-            result = self.dbutil.select(select)
+            invoices_result = crud.get_invoices_count()[0]
 
-            if result[0][0]:
-                maxInv: int = int(result[0][0])
-            else:
-                maxInv = 0
+            maxInv: int = int(invoices_result.max_id) if invoices_result.max_id else 0
 
             if int(self.currentId) > int(maxInv) or self.deleted:
-                select: str = (
-                    "insert into invoices (id, invoice_name, date, goods, goods_unique, earning) values ("
-                    + str(self.currentId)
-                    + ", '', '2000-01-01', 0, 0, 0)"
-                )
-                result = self.dbutil.select(select)
+                _ = crud.create_invoice(self.currentId)
 
             self.calculate()
 
-            select = f"update invoices set invoice_name = '{self.textbox.toPlainText()}', date = '{self.dateEdit.date().toString('yyyy-MM-dd')}', goods = {self.goods.text()}, goods_unique = {self.uniqueGoods.text().replace(' positions', '')}, earning = {self.sum.text()} where id = {self.currentId}"
-            result = self.dbutil.select(select)
+            _ = crud.update_invoice(
+                id=self.currentId,
+                name=self.textbox.toPlainText(),
+                date=self.dateEdit.date().toPyDate(),
+                goods=int(self.goods.text()),
+                goods_unique=int(self.uniqueGoods.text().replace(" positions", "")),
+                earning=float(self.sum.text()),
+            )
 
             ids = []
 
@@ -327,32 +314,38 @@ class InvoicePage(QDialog):
                     self.tableWidget.item(i, 3),
                     self.tableWidget.item(i, 4),
                 ):
-                    ids.append(int(self.tableWidget.item(i, 0).text()))
+                    ids.append(self.tableWidget.item(i, 0).text())
 
                     if int(self.tableWidget.item(i, 0).text()) > self.maxGoodsId:
-                        select = f"insert into goods (invoice, width, height, count, price, total_price) values ({self.currentId}, {self.tableWidget.item(i, 1).text()}, {self.tableWidget.item(i, 2).text()}, {self.tableWidget.item(i, 3).text()}, {self.tableWidget.item(i, 4).text()}, {self.tableWidget.item(i, 5).text()})"
-                        result = self.dbutil.select(select)
+                        _ = crud.create_good(
+                            id=self.currentId,
+                            width=self.tableWidget.item(i, 1).text(),
+                            height=self.tableWidget.item(i, 2).text(),
+                            count=self.tableWidget.item(i, 3).text(),
+                            price=self.tableWidget.item(i, 4).text(),
+                            total_price=self.tableWidget.item(i, 5).text(),
+                        )
                     else:
-                        select = f"update goods set width = {self.tableWidget.item(i, 1).text()}, height = {self.tableWidget.item(i, 2).text()}, count = {self.tableWidget.item(i, 3).text()}, price = {self.tableWidget.item(i, 4).text()}, total_price = {self.tableWidget.item(i, 5).text()} where id = {self.tableWidget.item(i, 0).text()}"
-                        result = self.dbutil.select(select)
+                        _ = crud.update_good(
+                            id=self.tableWidget.item(i, 0).text(),
+                            width=self.tableWidget.item(i, 1).text(),
+                            height=self.tableWidget.item(i, 2).text(),
+                            count=self.tableWidget.item(i, 3).text(),
+                            price=self.tableWidget.item(i, 4).text(),
+                            total_price=self.tableWidget.item(i, 5).text(),
+                        )
 
-            select = f"select id from goods where invoice = {self.currentId}"
-            result = self.dbutil.select(select)
+            good_result = crud.get_good(id=self.currentId)
 
-            array = [a[0] for a in result]
-            toDelete = set(array) - set(ids)
+            array = [a.id for a in good_result]
+            toDelete: set[int] = set(array) - set(ids)
 
             for id in toDelete:
-                select = f"delete from goods where id = {id}"
-                result = self.dbutil.select(select)
+                _ = crud.delete_good(id=id)
 
-        select = "select max(id) from goods"
-        result = self.dbutil.select(select)
+        goods_result = crud.get_goods_count()[0]
 
-        if result[0][0]:
-            newMaxId = int(result[0][0])
-        else:
-            newMaxId = 0
+        newMaxId: int = int(goods_result.max_id) if goods_result.max_id else 0
 
         self.maxGoodsId = newMaxId
 
@@ -361,12 +354,9 @@ class InvoicePage(QDialog):
     def delete(self):
         self.deleted = True
 
-        select = "delete from goods where invoice = " + str(self.currentId)
-        result = self.dbutil.select(select)
+        result = crud.delete_goods(id=self.currentId)
 
-        select = "delete from invoices where id = " + str(self.currentId)
-        result = self.dbutil.select(select)
+        result = crud.delete_invoice(id=self.currentId)
 
-        select = "select max(id) from goods"
-        result = self.dbutil.select(select)
-        self.maxGoodsId = result[0][0]
+        result = crud.get_goods_count()[0]
+        self.maxGoodsId = result.max_id
