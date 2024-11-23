@@ -1,19 +1,20 @@
 import os
+import typing as ty
 from datetime import date, datetime
-from typing import final
 
-from PyQt6 import QtWidgets
+from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QIcon
-from PyQt6.QtWidgets import QDialog, QMessageBox, QTableWidgetItem
 
 from core.db.crud import invoice as crud
 from core.db.util import get_application_path
+from core.handlers.pages import notification
+from core.handlers.pages.notification import NotificationWidget
 from core.utils.overwrites import loadUi_
 
 
-@final
-class InvoicePage(QDialog):
+@ty.final
+class InvoicePage(QtWidgets.QDialog):
+    notification: NotificationWidget | None = None
     widget: QtWidgets.QStackedWidget
 
     backToInvoices: pyqtSignal = pyqtSignal()
@@ -31,6 +32,7 @@ class InvoicePage(QDialog):
         )
 
         self.widget = widget
+        self.installEventFilter(self)
 
         self.goBackToInvoicesButton.clicked.connect(self.goBackToInvoices)
         self.addRowButton.clicked.connect(self.addRow)
@@ -48,13 +50,18 @@ class InvoicePage(QDialog):
         self.tableWidget.setColumnHidden(0, 1)
         self.tableWidget.setSortingEnabled(True)
 
-        self.messageBox = QMessageBox(self)
+        self.messageBox = QtWidgets.QMessageBox(self)
         self.messageBox.setWindowIcon(
-            QIcon(os.path.join(get_application_path(), "uis/invoice/dokkaebi.png"))
+            QtGui.QIcon(
+                os.path.join(get_application_path(), "uis/invoice/dokkaebi.png")
+            )
         )
         self.messageBox.setWindowTitle("Fill error")
 
     def goBackToInvoices(self) -> None:
+        if self.notification and self.notification.isVisible():
+            self.notification.start_hide_animation()
+
         self.widget.setCurrentIndex(0)
         self.backToInvoices.emit()
 
@@ -111,18 +118,20 @@ class InvoicePage(QDialog):
 
         self.tableWidget.setRowCount(len(goods_result))
         for i, val in enumerate(goods_result):
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(val.id))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(val.width))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(val.height))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(val.count))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem(val.price))
-            self.tableWidget.setItem(i, 5, QTableWidgetItem(val.total_price))
+            self.tableWidget.setItem(i, 0, QtWidgets.QTableWidgetItem(val.id))
+            self.tableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem(val.width))
+            self.tableWidget.setItem(i, 2, QtWidgets.QTableWidgetItem(val.height))
+            self.tableWidget.setItem(i, 3, QtWidgets.QTableWidgetItem(val.count))
+            self.tableWidget.setItem(i, 4, QtWidgets.QTableWidgetItem(val.price))
+            self.tableWidget.setItem(i, 5, QtWidgets.QTableWidgetItem(val.total_price))
 
     def addRow(self) -> None:
         newId: int = int(self.maxGoodsId) + self.newRows + 1
         currentRow: int = self.tableWidget.currentRow()
         self.tableWidget.insertRow(currentRow + 1)
-        self.tableWidget.setItem(currentRow + 1, 0, QTableWidgetItem(str(newId)))
+        self.tableWidget.setItem(
+            currentRow + 1, 0, QtWidgets.QTableWidgetItem(str(newId))
+        )
         self.newRows += 1
 
     def deleteRow(self) -> None:
@@ -147,14 +156,18 @@ class InvoicePage(QDialog):
 
             if self.upgradedCheck(width, height, count, price):
                 for j in range(1, self.tableWidget.columnCount() - 1):
-                    self.tableWidget.item(i, j).setBackground(QColor(255, 255, 255))
+                    self.tableWidget.item(i, j).setBackground(
+                        QtGui.QColor(255, 255, 255)
+                    )
 
                 count: int = int(count.text())
                 price: float = float(price.text())
 
                 value = count * price
                 formatted_value = value
-                self.tableWidget.setItem(i, 5, QTableWidgetItem(str(formatted_value)))
+                self.tableWidget.setItem(
+                    i, 5, QtWidgets.QTableWidgetItem(str(formatted_value))
+                )
 
                 sum += float(formatted_value)
                 goods += count
@@ -162,9 +175,11 @@ class InvoicePage(QDialog):
             else:
                 for j in range(1, self.tableWidget.columnCount() - 1):
                     if self.tableWidget.item(i, j):
-                        self.tableWidget.item(i, j).setBackground(QColor(255, 92, 92))
+                        self.tableWidget.item(i, j).setBackground(
+                            QtGui.QColor(255, 92, 92)
+                        )
 
-                self.messageBox.setFont(QFont("Dubai Light", 13))
+                self.messageBox.setFont(QtGui.QFont("Dubai Light", 13))
 
                 _ = self.messageOnCond(
                     check=0,
@@ -351,6 +366,24 @@ class InvoicePage(QDialog):
 
         self.deleted = False
 
+        self.show_notification(message="Saved succesfully")
+
+    def show_notification(self, message: str) -> None:
+        if self.notification is not None:
+            # Закрываем предыдущее уведомление
+            _ = self.notification.close()
+
+        self.notification = NotificationWidget(message, self)
+        self.notification.show()
+        # Устанавливаем позицию уведомления
+        self.notification.update_position()
+
+    @ty.override
+    def resizeEvent(self, a0: QtGui.QResizeEvent | None = None):
+        super().resizeEvent(a0)
+        if self.notification is not None:
+            self.notification.update_position()
+
     def delete(self):
         self.deleted = True
 
@@ -359,4 +392,4 @@ class InvoicePage(QDialog):
         result = crud.delete_invoice(id=self.currentId)
 
         result = crud.get_goods_count()[0]
-        self.maxGoodsId = result.max_id
+        self.maxGoodsId = int(result.max_id)

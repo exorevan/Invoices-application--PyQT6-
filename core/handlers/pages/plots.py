@@ -9,10 +9,7 @@ import numpy as np
 from dateutil.relativedelta import relativedelta
 from matplotlib import ticker
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtWidgets import QDialog, QMessageBox, QScrollArea
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 from core.db.crud import plots as crud
 from core.db.util import get_application_path
@@ -20,7 +17,7 @@ from core.utils.overwrites import loadUi_
 
 
 @final
-class PlotsPage(QDialog):
+class PlotsPage(QtWidgets.QDialog):
     plot_type = 0
     isBlocked = True
 
@@ -45,13 +42,15 @@ class PlotsPage(QDialog):
         self.datePicker1.setDate(date.today() - timedelta(days=30))
         self.datePicker2.setDate(date.today())
 
-        self.messageBox = QMessageBox(self)
+        self.messageBox = QtWidgets.QMessageBox(self)
         self.messageBox.setWindowIcon(
-            QIcon(os.path.join(get_application_path(), "uis/invoice/dokkaebi.png"))
+            QtGui.QIcon(
+                os.path.join(get_application_path(), "uis/invoice/dokkaebi.png")
+            )
         )
         self.messageBox.setWindowTitle("Plot error")
 
-        self.scroll = QScrollArea()
+        self.scroll = QtWidgets.QScrollArea()
 
         self.fig, self.ax = plt.subplots()
         _, _ = self.startPlot(0)
@@ -179,8 +178,12 @@ class PlotsPage(QDialog):
         self.scene = QtWidgets.QGraphicsScene()
         self.View = QtWidgets.QGraphicsView(self.scene, self.graphicsView)
 
-        self.View.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.View.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.View.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.View.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
 
         date1 = self.datePicker1.date().toPyDate()
         date2 = self.datePicker2.date().toPyDate() + timedelta(days=1)
@@ -266,7 +269,7 @@ class PlotsPage(QDialog):
             border = 30
 
         if len(x) > border:
-            self.messageBox.setFont(QFont("Dubai Light", 13))
+            self.messageBox.setFont(QtGui.QFont("Dubai Light", 13))
             self.messageBox.setText("Too many dates input")
             self.messageBox.exec()
 
@@ -334,7 +337,7 @@ class PlotsPage(QDialog):
         if len(mul) == 0:
             plt.close(self.fig)
 
-            self.messageBox.setFont(QFont("Dubai Light", 13))
+            self.messageBox.setFont(QtGui.QFont("Dubai Light", 13))
             self.messageBox.setText(
                 f"There's no goods in this period ({self.datePicker1.date().toPyDate()} - {self.datePicker2.date().toPyDate()})"
             )
@@ -383,7 +386,7 @@ class PlotsPage(QDialog):
         self.instantResize()
 
         if sum(y) < 1:
-            self.messageBox.setFont(QFont("Dubai Light", 13))
+            self.messageBox.setFont(QtGui.QFont("Dubai Light", 13))
             self.messageBox.setText(
                 f"There're no goods in this period ({self.datePicker1.date().toPyDate()} - {self.datePicker2.date().toPyDate()})"
             )
@@ -394,7 +397,7 @@ class PlotsPage(QDialog):
             return True
 
         if len(x) > 15:
-            self.messageBox.setFont(QFont("Dubai Light", 13))
+            self.messageBox.setFont(QtGui.QFont("Dubai Light", 13))
             self.messageBox.setText("Too many dates input")
             self.messageBox.exec()
 

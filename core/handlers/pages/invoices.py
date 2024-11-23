@@ -1,16 +1,14 @@
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from PyQt6 import QtWidgets
-from PyQt6.QtWidgets import QDialog, QTableWidgetItem
 
-from conf.config import INVOICES_TABLE_COLUMNS_COUNT
 from core.db.crud import invoices as crud
 from core.db.util import get_application_path
 from core.utils.overwrites import loadUi_
 
 
-class InvoicesPage(QDialog):
+class InvoicesPage(QtWidgets.QDialog):
     widget: QtWidgets.QStackedWidget
 
     def __init__(self, widget: QtWidgets.QStackedWidget):
@@ -53,11 +51,11 @@ class InvoicesPage(QDialog):
         self.tableWidget.setRowCount(len(result))
 
         for i, row in enumerate(result):
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(row.id))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(row.date))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(row.name))
-            self.tableWidget.setItem(i, 3, QTableWidgetItem(row.goods))
-            self.tableWidget.setItem(i, 4, QTableWidgetItem(row.earning))
+            self.tableWidget.setItem(i, 0, QtWidgets.QTableWidgetItem(row.id))
+            self.tableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem(row.date))
+            self.tableWidget.setItem(i, 2, QtWidgets.QTableWidgetItem(row.name))
+            self.tableWidget.setItem(i, 3, QtWidgets.QTableWidgetItem(row.goods))
+            self.tableWidget.setItem(i, 4, QtWidgets.QTableWidgetItem(row.earning))
 
     def goToInvoice(self, index):
         row = self.tableWidget.item(self.tableWidget.currentRow(), 0).text()
